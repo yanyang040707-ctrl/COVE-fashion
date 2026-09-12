@@ -1,0 +1,1247 @@
+/* =========================================
+   GLOBAL RESET
+========================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --black: #050505;
+    --deep-black: #080808;
+    --white: #f5f5f5;
+    --muted-white: #b9b9bd;
+    --gray: #77777e;
+    --border: #29292e;
+    --border-light: #44444b;
+    --lavender: #a99cff;
+    --lavender-soft: #8179bc;
+    --card-bg: #111114;
+}
+
+html {
+    width: 100%;
+    min-height: 100%;
+    background: var(--black);
+}
+
+body {
+    width: 100%;
+    min-height: 100vh;
+    background: var(--black);
+    color: var(--white);
+    font-family:
+        "Helvetica Neue",
+        Helvetica,
+        Arial,
+        "PingFang SC",
+        "Microsoft YaHei",
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    border: none;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible {
+    outline: 1px solid var(--lavender);
+    outline-offset: 4px;
+}
+
+
+/* =========================================
+   APP
+========================================= */
+
+.app {
+    width: 100%;
+    min-height: 100vh;
+    background: var(--black);
+    position: relative;
+}
+
+
+/* =========================================
+   TOP NAVIGATION
+========================================= */
+
+.top-nav {
+    height: 72px;
+    width: 100%;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 61px;
+    position: relative;
+    z-index: 20;
+    background: rgba(5, 5, 5, 0.97);
+}
+
+.brand {
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 31px;
+    font-weight: 400;
+    letter-spacing: -1.8px;
+    color: #f1f1f1;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.25s ease;
+}
+
+.brand:hover {
+    opacity: 0.7;
+}
+
+.main-navigation {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    height: 100%;
+    gap: 62px;
+}
+
+.nav-item {
+    height: 100%;
+    min-width: 48px;
+    position: relative;
+    color: #e4e4e4;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    transition: color 0.3s ease;
+}
+
+.nav-item::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: transparent;
+    transition: background 0.3s ease;
+}
+
+.nav-item:hover {
+    color: white;
+}
+
+.nav-item.active {
+    color: white;
+}
+
+.nav-item.active::after {
+    background: var(--lavender);
+}
+
+.profile-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #d7d7da;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    transition: color 0.3s ease;
+}
+
+.profile-button:hover {
+    color: white;
+}
+
+.profile-icon {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #b9b9bf;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+}
+
+.profile-icon::before {
+    content: "";
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border: 1px solid #b9b9bf;
+    border-radius: 50%;
+    left: 50%;
+    top: 3px;
+    transform: translateX(-50%);
+}
+
+.profile-icon::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 5px;
+    border: 1px solid #b9b9bf;
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    left: 50%;
+    bottom: 3px;
+    transform: translateX(-50%);
+}
+
+
+/* =========================================
+   MAIN CONTENT
+========================================= */
+
+.main-content {
+    width: 100%;
+    min-height: calc(100vh - 72px);
+    position: relative;
+}
+
+.page-section {
+    display: none;
+    min-height: calc(100vh - 72px);
+}
+
+.page-section.active-page {
+    display: block;
+}
+
+
+/* =========================================
+   INSIGHTS PAGE
+========================================= */
+
+.insights-page {
+    position: relative;
+    padding-top: 180px;
+    min-height: calc(100vh - 72px);
+}
+
+
+/* =========================================
+   SEARCH BOX
+========================================= */
+
+.search-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 0 40px;
+}
+
+.search-box {
+    width: min(854px, 72vw);
+    height: 57px;
+    border: 1px solid #696970;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    padding: 0 21px;
+    position: relative;
+    background: rgba(10, 10, 12, 0.7);
+    transition:
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+.search-box:hover {
+    border-color: #85858e;
+}
+
+.search-box:focus-within {
+    border-color: #a7a1d2;
+    box-shadow: 0 0 0 1px rgba(169, 156, 255, 0.08);
+}
+
+.search-icon {
+    color: #a7a7b0;
+    flex-shrink: 0;
+    margin-right: 15px;
+}
+
+.search-box input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #eeeeef;
+    font-size: 15px;
+    letter-spacing: 0.2px;
+}
+
+.search-box input::placeholder {
+    color: #8d8d96;
+    opacity: 1;
+}
+
+.search-submit {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #92929b;
+    flex-shrink: 0;
+    transition: color 0.25s ease;
+}
+
+.search-submit:hover {
+    color: white;
+}
+
+
+/* =========================================
+   TREND CAROUSEL
+========================================= */
+
+.trend-section {
+    width: 100%;
+    margin-top: 81px;
+    padding-left: 61px;
+    overflow: hidden;
+}
+
+.trend-carousel {
+    width: max-content;
+    display: flex;
+    gap: 14px;
+    padding-right: 61px;
+    transition: transform 0.4s ease;
+}
+
+
+/* =========================================
+   TREND CARD
+========================================= */
+
+.trend-card {
+    width: 245px;
+    height: 168px;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid #57575f;
+    background: #111114;
+    position: relative;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition:
+        transform 0.35s ease,
+        border-color 0.35s ease,
+        box-shadow 0.35s ease;
+}
+
+.trend-card:hover {
+    transform: translateY(-5px);
+    border-color: #a8a0d2;
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(169, 156, 255, 0.1);
+}
+
+.trend-card:active {
+    transform: translateY(-2px);
+}
+
+.card-visual {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.card-visual::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(0, 0, 0, 0.02) 25%,
+            rgba(0, 0, 0, 0.25) 70%,
+            rgba(0, 0, 0, 0.78) 100%
+        );
+    pointer-events: none;
+}
+
+.card-bottom {
+    position: absolute;
+    z-index: 4;
+    left: 20px;
+    right: 18px;
+    bottom: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-title {
+    font-size: 14px;
+    color: #ededee;
+    font-weight: 400;
+    letter-spacing: 0.1px;
+}
+
+.card-arrow {
+    color: #ededee;
+    font-size: 20px;
+    line-height: 1;
+    font-weight: 200;
+    transition: transform 0.3s ease;
+}
+
+.trend-card:hover .card-arrow {
+    transform: translateX(4px);
+}
+
+
+/* =========================================
+   CARD VISUAL 1 — REPORT
+========================================= */
+
+.visual-report {
+    background:
+        radial-gradient(
+            ellipse at 76% 32%,
+            rgba(139, 128, 226, 0.25),
+            transparent 38%
+        ),
+        linear-gradient(
+            135deg,
+            #12131a 0%,
+            #171723 45%,
+            #08090d 100%
+        );
+}
+
+.visual-orbit {
+    position: absolute;
+    width: 200px;
+    height: 120px;
+    border: 1px solid rgba(163, 155, 232, 0.4);
+    border-radius: 50%;
+    transform: rotate(-32deg);
+    right: -61px;
+    top: -21px;
+    box-shadow: 0 0 35px rgba(130, 117, 226, 0.1);
+}
+
+.orbit-two {
+    width: 250px;
+    height: 140px;
+    right: -91px;
+    top: -31px;
+    border-color: rgba(110, 100, 185, 0.22);
+}
+
+.visual-glow {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(126, 113, 224, 0.2);
+    filter: blur(24px);
+    top: 30px;
+    right: 30px;
+}
+
+
+/* =========================================
+   CARD VISUAL 2 — AI
+========================================= */
+
+.visual-ai {
+    background:
+        radial-gradient(
+            circle at center,
+            #292d42 0%,
+            #131522 33%,
+            #08090e 72%
+        );
+}
+
+.lens-outer {
+    position: absolute;
+    width: 125px;
+    height: 125px;
+    border-radius: 50%;
+    border: 1px solid rgba(188, 190, 220, 0.25);
+    top: -24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        inset 0 0 35px rgba(143, 154, 208, 0.12),
+        0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.lens-inner {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    border: 1px solid rgba(145, 150, 196, 0.5);
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            #858aa9,
+            #333951 38%,
+            #10121e 68%,
+            #050609 100%
+        );
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+}
+
+.lens-core {
+    position: absolute;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            #b4b9d0,
+            #2b3049 45%,
+            #080a12 80%
+        );
+    box-shadow: 0 0 10px rgba(130, 135, 190, 0.25);
+}
+
+
+/* =========================================
+   CARD VISUAL 3 — NEW CHINESE
+========================================= */
+
+.visual-chinese {
+    background:
+        radial-gradient(
+            ellipse at 45% 90%,
+            rgba(89, 86, 65, 0.5),
+            transparent 50%
+        ),
+        linear-gradient(
+            135deg,
+            #10110f,
+            #292b24 55%,
+            #11120e
+        );
+}
+
+.branch {
+    position: absolute;
+    width: 170px;
+    height: 1px;
+    background: rgba(181, 174, 147, 0.6);
+    transform-origin: left center;
+    left: 80px;
+    top: 45px;
+}
+
+.branch-one {
+    transform: rotate(130deg);
+}
+
+.branch-two {
+    width: 120px;
+    left: 111px;
+    top: 70px;
+    transform: rotate(155deg);
+}
+
+.flower {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #b8b49b;
+    box-shadow:
+        8px 2px 0 -1px #a39d82,
+        2px 9px 0 -1px #8e8a72;
+}
+
+.flower-one {
+    right: 57px;
+    top: 32px;
+}
+
+.flower-two {
+    right: 97px;
+    top: 62px;
+    transform: scale(0.7);
+}
+
+.flower-three {
+    right: 30px;
+    top: 73px;
+    transform: scale(0.55);
+}
+
+
+/* =========================================
+   CARD VISUAL 4 — STREET
+========================================= */
+
+.visual-street {
+    background:
+        linear-gradient(
+            130deg,
+            #101113 0%,
+            #25272a 45%,
+            #08090a 100%
+        );
+}
+
+.street-light {
+    position: absolute;
+    background: rgba(210, 213, 215, 0.75);
+    filter: blur(0.5px);
+    transform: rotate(35deg);
+}
+
+.light-one {
+    width: 190px;
+    height: 14px;
+    top: 34px;
+    left: -52px;
+}
+
+.light-two {
+    width: 190px;
+    height: 9px;
+    top: 64px;
+    left: 52px;
+    opacity: 0.55;
+}
+
+.street-shadow {
+    position: absolute;
+    width: 200px;
+    height: 100px;
+    background: linear-gradient(
+        120deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.65) 45%,
+        transparent 46%
+    );
+    right: -20px;
+    bottom: 20px;
+}
+
+.street-person {
+    position: absolute;
+    width: 5px;
+    height: 45px;
+    background: #0a0a0a;
+    left: 150px;
+    top: 62px;
+    box-shadow:
+        0 -7px 0 -1px #0a0a0a,
+        3px 38px 0 -1px #0a0a0a;
+}
+
+
+/* =========================================
+   CARD VISUAL 5 — QUIET LUXURY
+========================================= */
+
+.visual-quiet {
+    background:
+        linear-gradient(
+            145deg,
+            #37393a,
+            #18191b 55%,
+            #0d0e0f
+        );
+}
+
+.fabric-shape {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(0.4px);
+}
+
+.fabric-one {
+    width: 220px;
+    height: 180px;
+    top: -65px;
+    right: -60px;
+    background:
+        linear-gradient(
+            145deg,
+            #6d7070,
+            #252728 48%,
+            #111213
+        );
+    transform: rotate(-22deg);
+}
+
+.fabric-two {
+    width: 210px;
+    height: 160px;
+    top: 40px;
+    left: -110px;
+    background:
+        linear-gradient(
+            135deg,
+            #535656,
+            #1d1f20
+        );
+    transform: rotate(25deg);
+    opacity: 0.7;
+}
+
+.fabric-three {
+    width: 180px;
+    height: 90px;
+    top: 20px;
+    left: 80px;
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    transform: rotate(-18deg);
+    background: transparent;
+}
+
+
+/* =========================================
+   CARD VISUAL 6 — BRAND
+========================================= */
+
+.visual-brand {
+    background:
+        linear-gradient(
+            130deg,
+            #0c0d10,
+            #16171d 60%,
+            #08090b
+        );
+}
+
+.brand-line {
+    position: absolute;
+    height: 1px;
+    background: rgba(158, 158, 174, 0.35);
+    transform: rotate(-90deg);
+    transform-origin: center;
+}
+
+.line-one {
+    width: 240px;
+    right: -58px;
+    top: 75px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(175, 175, 192, 0.65)
+    );
+}
+
+.line-two {
+    width: 150px;
+    right: 32px;
+    top: 50px;
+    background: rgba(140, 140, 160, 0.4);
+}
+
+.line-three {
+    width: 100px;
+    right: 76px;
+    top: 90px;
+    background: rgba(140, 140, 160, 0.25);
+}
+
+.visual-brand::before {
+    content: "";
+    position: absolute;
+    width: 100px;
+    height: 170px;
+    right: 33px;
+    top: -2px;
+    border-left: 1px solid rgba(169, 156, 255, 0.3);
+    border-right: 1px solid rgba(169, 156, 255, 0.1);
+    transform: skewX(-20deg);
+}
+
+
+/* =========================================
+   EMPTY SEARCH STATE
+========================================= */
+
+.search-empty {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 75px;
+    color: #77777f;
+}
+
+.search-empty.visible {
+    display: flex;
+}
+
+.empty-symbol {
+    font-size: 34px;
+    color: #55555e;
+    font-weight: 200;
+}
+
+.search-empty p {
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+.search-empty button {
+    font-size: 13px;
+    color: #aaa2df;
+    border-bottom: 1px solid #71699e;
+    padding-bottom: 3px;
+}
+
+
+/* =========================================
+   SECONDARY PAGES
+========================================= */
+
+.secondary-page {
+    min-height: calc(100vh - 72px);
+    position: relative;
+}
+
+.minimal-page-content {
+    padding: 180px 61px;
+}
+
+.page-label {
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: #767680;
+    margin-bottom: 30px;
+}
+
+.minimal-page-content h1 {
+    font-size: 48px;
+    font-weight: 300;
+    letter-spacing: -2px;
+    color: #e9e9eb;
+}
+
+.page-line {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin-top: 40px;
+}
+
+
+/* =========================================
+   PROFILE PANEL
+========================================= */
+
+.profile-panel {
+    position: fixed;
+    z-index: 50;
+    top: 0;
+    right: 0;
+    width: 350px;
+    height: 100vh;
+    background: #0b0b0d;
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-panel.open {
+    transform: translateX(0);
+}
+
+.panel-header {
+    height: 72px;
+    padding: 0 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #d8d8dd;
+}
+
+.panel-close {
+    font-size: 26px;
+    font-weight: 200;
+    color: #777780;
+    transition: color 0.2s ease;
+}
+
+.panel-close:hover {
+    color: white;
+}
+
+.panel-body {
+    padding: 60px 28px;
+}
+
+.profile-placeholder {
+    margin-bottom: 30px;
+}
+
+.profile-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 1px solid #44444e;
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            #353543,
+            #0c0c0f 70%
+        );
+}
+
+.profile-name {
+    font-size: 18px;
+    color: #eeeeef;
+    margin-bottom: 12px;
+}
+
+.profile-status {
+    font-size: 12px;
+    color: #666670;
+    letter-spacing: 0.3px;
+}
+
+
+/* =========================================
+   TREND DETAIL PAGE
+========================================= */
+
+.trend-detail-page {
+    position: fixed;
+    z-index: 30;
+    inset: 72px 0 0 0;
+    background: var(--black);
+    display: none;
+    overflow-y: auto;
+}
+
+.trend-detail-page.open {
+    display: block;
+}
+
+.detail-topbar {
+    height: 72px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 61px;
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #a6a6af;
+    font-size: 13px;
+    transition: color 0.25s ease;
+}
+
+.back-button:hover {
+    color: white;
+}
+
+.back-button span:first-child {
+    font-size: 20px;
+    font-weight: 200;
+}
+
+.detail-category {
+    color: #666671;
+    font-size: 10px;
+    letter-spacing: 4px;
+}
+
+.detail-content {
+    padding: 100px 61px 120px;
+    max-width: 1500px;
+    margin: 0 auto;
+}
+
+.detail-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 34px;
+}
+
+.detail-number {
+    color: var(--lavender);
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding-top: 12px;
+}
+
+.detail-heading h1 {
+    font-size: clamp(44px, 5vw, 78px);
+    line-height: 1;
+    font-weight: 300;
+    letter-spacing: -4px;
+    color: #ededee;
+}
+
+.detail-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 75px 0 45px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: minmax(400px, 1.3fr) minmax(300px, 0.7fr);
+    gap: 80px;
+    align-items: start;
+}
+
+.detail-visual {
+    height: 420px;
+    border: 1px solid #33333b;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+    background: #12131a;
+}
+
+.detail-visual::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(
+            circle at 70% 30%,
+            rgba(169, 156, 255, 0.18),
+            transparent 45%
+        );
+}
+
+.detail-text {
+    padding-top: 15px;
+    max-width: 350px;
+}
+
+.detail-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: #777782;
+    margin-bottom: 32px;
+}
+
+.detail-text p {
+    font-size: 17px;
+    line-height: 1.9;
+    font-weight: 300;
+    color: #b3b3bb;
+    letter-spacing: 0.3px;
+}
+
+.detail-meta {
+    display: flex;
+    gap: 10px;
+    margin-top: 50px;
+    font-size: 11px;
+    color: #696974;
+}
+
+
+/* =========================================
+   TOAST
+========================================= */
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 35px;
+    transform: translate(-50%, 20px);
+    background: #eeeeef;
+    color: #101014;
+    padding: 12px 23px;
+    border-radius: 100px;
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s ease;
+    z-index: 100;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 1100px) {
+
+    .top-nav {
+        padding: 0 35px;
+    }
+
+    .trend-section {
+        padding-left: 35px;
+    }
+
+    .trend-carousel {
+        padding-right: 35px;
+    }
+
+    .trend-card {
+        width: 230px;
+    }
+
+    .detail-content {
+        padding-left: 35px;
+        padding-right: 35px;
+    }
+
+    .detail-topbar {
+        padding: 0 35px;
+    }
+
+}
+
+
+@media (max-width: 760px) {
+
+    .top-nav {
+        height: 64px;
+        padding: 0 20px;
+    }
+
+    .brand {
+        font-size: 25px;
+    }
+
+    .main-navigation {
+        gap: 20px;
+    }
+
+    .nav-item {
+        font-size: 13px;
+        min-width: auto;
+    }
+
+    .profile-button span:last-child {
+        display: none;
+    }
+
+    .insights-page {
+        padding-top: 120px;
+    }
+
+    .search-wrapper {
+        padding: 0 20px;
+    }
+
+    .search-box {
+        width: 100%;
+    }
+
+    .trend-section {
+        padding-left: 20px;
+        margin-top: 55px;
+    }
+
+    .trend-carousel {
+        gap: 12px;
+        padding-right: 20px;
+    }
+
+    .trend-card {
+        width: 230px;
+        height: 158px;
+    }
+
+    .minimal-page-content {
+        padding: 120px 20px;
+    }
+
+    .minimal-page-content h1 {
+        font-size: 38px;
+    }
+
+    .detail-topbar {
+        padding: 0 20px;
+        height: 64px;
+    }
+
+    .trend-detail-page {
+        inset: 64px 0 0 0;
+    }
+
+    .detail-content {
+        padding: 60px 20px;
+    }
+
+    .detail-heading {
+        gap: 15px;
+    }
+
+    .detail-heading h1 {
+        font-size: 42px;
+        letter-spacing: -2px;
+    }
+
+    .detail-divider {
+        margin: 45px 0 30px;
+    }
+
+    .detail-grid {
+        display: block;
+    }
+
+    .detail-visual {
+        height: 280px;
+        margin-bottom: 40px;
+    }
+
+    .detail-text {
+        max-width: 100%;
+    }
+
+    .profile-panel {
+        width: 100%;
+    }
+
+}
+
+
+/* =========================================
+   REDUCED MOTION
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+}
