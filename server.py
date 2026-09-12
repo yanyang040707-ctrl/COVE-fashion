@@ -1,16 +1,19 @@
-"""Local-only COVE preview and Zhihu CLI bridge (Python 3.9+, no dependencies)."""
+"""COVE WSGI application and direct Zhihu HTTP API client."""
 import argparse
 import json
+import mimetypes
 import os
 from pathlib import Path
-import subprocess
+import socket
 import threading
 import time
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode, urlsplit
+from urllib.request import Request, build_opener, HTTPRedirectHandler
+from wsgiref.simple_server import make_server
 
 ROOT = Path(__file__).resolve().parent
-CLI = Path(os.environ.get("ZHIHU_CLI_PATH", str(Path.home() / "Library/Application Support/zhihu-cli/current/zhihu-cli")))
+ENDPOINT = "https://developer.zhihu.com/api/v1/content/zhihu_search"
 CACHE = {}
 LOCK = threading.Lock()
 LAST_CALL = float("-inf")
@@ -21,39 +24,69 @@ class APIError(Exception):
         self.status, self.code, self.message = status, code, message
 
 
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def credentials():
+    secret = os.environ.get("ZHIHU_ACCESS_SECRET", "").strip()
+    if not secret:
+        raise APIError(503, "AUTH_REQUIRED", "搜索服务尚未配置授权。")
+    if any(ord(c) < 33 or ord(c) > 126 for c in secret):
+        raise APIError(503, "AUTH_REQUIRED", "搜索服务授权配置无效。")
+    return secret
+
+
+def fetch_zhihu(query):
+    request = Request(ENDPOINT + "?" + urlencode({"Query": query, "Count": 6}), headers={
+        "Authorization": "Bearer " + credentials(),
+        "X-Request-Timestamp": str(int(time.time())),
+        "Content-Type": "application/json",
+    })
+    try:
+        # Do not follow redirects with the authorization header.
+        with build_opener(NoRedirect()).open(request, timeout=25) as response:
+            raw = response.read(2 * 1024 * 1024 + 1)
+        if len(raw) > 2 * 1024 * 1024:
+            raise APIError(502, "INVALID_RESPONSE", "搜索服务返回异常。")
+        payload = json.loads(raw)
+    except HTTPError as exc:
+        if exc.code in (401, 403):
+            raise APIError(503, "AUTH_REQUIRED", "知乎搜索授权无效或无访问权限。")
+        if exc.code == 429:
+            raise APIError(429, "UPSTREAM_RATE_LIMIT", "知乎接口额度或频率受限，请稍后再试。")
+        raise APIError(502, "UPSTREAM_ERROR", "知乎搜索暂不可用，请稍后再试。")
+    except (TimeoutError, socket.timeout):
+        raise APIError(504, "TIMEOUT", "搜索超时，请稍后重试。")
+    except URLError as exc:
+        if isinstance(exc.reason, (TimeoutError, socket.timeout)):
+            raise APIError(504, "TIMEOUT", "搜索超时，请稍后重试。")
+        raise APIError(502, "NETWORK_ERROR", "无法连接知乎搜索服务。")
+    except (ValueError, UnicodeError):
+        raise APIError(502, "INVALID_RESPONSE", "搜索服务返回异常。")
+    if not isinstance(payload, dict):
+        raise APIError(502, "INVALID_RESPONSE", "搜索服务返回异常。")
+    if payload.get("Code") != 0:
+        # Upstream messages may contain diagnostics; never expose them.
+        raise APIError(502, "UPSTREAM_ERROR", "知乎搜索暂不可用，请检查授权与额度。")
+    return payload
+
+
 def search(query):
     global LAST_CALL
-    with LOCK:
+    credentials()
+    # Reject concurrent calls instead of building an unbounded queue.
+    if not LOCK.acquire(blocking=False):
+        raise APIError(429, "RATE_LIMIT", "搜索服务忙，请稍后再试。")
+    try:
         now = time.monotonic()
         if query in CACHE and now - CACHE[query][0] < 300:
             return dict(CACHE[query][1], cached=True)
         if now - LAST_CALL < 2:
             raise APIError(429, "RATE_LIMIT", "搜索较频繁，请稍后再试。")
         LAST_CALL = now
-        try:
-            result = subprocess.run(
-                [str(CLI), "search", "zhihu", "--query", query, "--count", "6", "--timeout", "25s"],
-                capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL,
-            )
-        except FileNotFoundError:
-            raise APIError(503, "CLI_MISSING", "本地搜索服务尚未配置，请联系维护者。")
-        except subprocess.TimeoutExpired:
-            raise APIError(504, "TIMEOUT", "搜索超时，请稍后重试。")
-        except OSError:
-            raise APIError(503, "CLI_UNAVAILABLE", "本地搜索服务暂时不可用。")
-        try:
-            payload = json.loads(result.stdout)
-        except (ValueError, TypeError):
-            raise APIError(502, "INVALID_RESPONSE", "搜索服务返回异常，请稍后再试。")
-        if not isinstance(payload, dict):
-            raise APIError(502, "INVALID_RESPONSE", "搜索服务返回异常。")
-        if result.returncode or payload.get("Code") != 0:
-            error = payload.get("error", {})
-            code = str(error.get("code", payload.get("Code", "UPSTREAM_ERROR"))) if isinstance(error, dict) else "UPSTREAM_ERROR"
-            if code in ("AUTH_REQUIRED", "KEYCHAIN_UNAVAILABLE", "AUTH_INVALID"):
-                raise APIError(503, "AUTH_REQUIRED", "搜索授权不可用，请联系维护者检查配置。")
-            # Never relay raw CLI output or upstream diagnostics to the browser.
-            raise APIError(502, "UPSTREAM_ERROR", "知乎搜索暂不可用，可能是授权、额度或网络问题，请稍后再试。")
+        payload = fetch_zhihu(query)
         data = payload.get("Data")
         if not isinstance(data, dict) or not isinstance(data.get("Items"), list):
             raise APIError(502, "INVALID_RESPONSE", "搜索服务返回异常。")
@@ -82,72 +115,69 @@ def search(query):
         CACHE[query] = (time.monotonic(), response)
         return response
 
+    finally:
+        LOCK.release()
 
-class Handler(SimpleHTTPRequestHandler):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=str(ROOT / "docs"), **kwargs)
 
-    def local_request(self):
-        port = self.server.server_port
-        return self.headers.get("Host") in (f"127.0.0.1:{port}", f"localhost:{port}")
-
-    def json_response(self, status, payload):
-        body = json.dumps(payload, ensure_ascii=False).encode()
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("X-Content-Type-Options", "nosniff")
-        self.end_headers()
-        try:
-            self.wfile.write(body)
-        except (BrokenPipeError, ConnectionResetError):
-            pass
-
-    def do_GET(self):
-        if not self.local_request():
-            return self.json_response(403, {"error": "仅允许本机访问"})
-        if urlsplit(self.path).path.startswith("/api/"):
-            return self.json_response(405, {"error": "请使用 POST 搜索"})
-        super().do_GET()
-
-    def do_POST(self):
-        try:
-            allowed = {f"http://{host}:{self.server.server_port}" for host in ("localhost", "127.0.0.1")}
-            if not self.local_request() or self.headers.get("Origin", next(iter(allowed))) not in allowed or self.headers.get("Sec-Fetch-Site") == "cross-site":
-                raise APIError(403, "FORBIDDEN", "仅允许本机页面访问。")
-            if self.path != "/api/insights/search":
+def application(environ, start_response):
+    from http import HTTPStatus
+    def respond(status, body, content_type="application/json; charset=utf-8"):
+        if not isinstance(body, bytes):
+            body = json.dumps(body, ensure_ascii=False).encode()
+        start_response(f"{status} {HTTPStatus(status).phrase}", [
+            ("Content-Type", content_type), ("Content-Length", str(len(body))),
+            ("Cache-Control", "no-store"), ("X-Content-Type-Options", "nosniff")])
+        return [body]
+    try:
+        path = environ.get("PATH_INFO", "/")
+        method = environ.get("REQUEST_METHOD", "GET")
+        if path.startswith("/api/"):
+            if path != "/api/insights/search":
                 raise APIError(404, "NOT_FOUND", "接口不存在。")
-            if self.headers.get_content_type() != "application/json":
+            if method != "POST":
+                raise APIError(405, "METHOD_NOT_ALLOWED", "请使用 POST 搜索。")
+            origin = environ.get("HTTP_ORIGIN")
+            configured = os.environ.get("COVE_PUBLIC_ORIGIN", "").rstrip("/")
+            allowed = {configured} if configured else {"http://127.0.0.1:8765", "http://localhost:8765"}
+            if (origin is not None and origin not in allowed) or environ.get("HTTP_SEC_FETCH_SITE") == "cross-site":
+                raise APIError(403, "FORBIDDEN", "不允许此来源访问。")
+            if environ.get("CONTENT_TYPE", "").split(";")[0].strip() != "application/json":
                 raise APIError(415, "CONTENT_TYPE", "请使用 JSON 请求。")
             try:
-                length = int(self.headers.get("Content-Length", "0"))
+                length = int(environ.get("CONTENT_LENGTH", "0"))
             except ValueError:
                 length = 0
             if not 0 < length <= 4096:
                 raise APIError(400, "INVALID_BODY", "请求大小无效。")
-            self.connection.settimeout(5)
             try:
-                body = json.loads(self.rfile.read(length))
+                body = json.loads(environ["wsgi.input"].read(length))
             except (ValueError, OSError):
                 raise APIError(400, "INVALID_JSON", "请求格式无效。")
             query = body.get("query") if isinstance(body, dict) else None
             if not isinstance(query, str) or not 1 <= len(query.strip()) <= 200:
                 raise APIError(400, "INVALID_QUERY", "请输入 1–200 字的搜索词。")
-            self.json_response(200, search(query.strip()))
-        except APIError as exc:
-            self.json_response(exc.status, {"error": {"code": exc.code, "message": exc.message}})
+            return respond(200, search(query.strip()))
+        if method != "GET":
+            raise APIError(405, "METHOD_NOT_ALLOWED", "不支持该请求方法。")
+        # Explicit assets only: do not serve source, credentials or directory listings.
+        assets = {"/": "index.html", "/index.html": "index.html", "/script.js": "script.js", "/styles.css": "styles.css"}
+        if path not in assets:
+            raise APIError(404, "NOT_FOUND", "页面不存在。")
+        file = ROOT / "docs" / assets[path]
+        return respond(200, file.read_bytes(), (mimetypes.guess_type(str(file))[0] or "application/octet-stream") + "; charset=utf-8")
+    except APIError as exc:
+        return respond(exc.status, {"error": {"code": exc.code, "message": exc.message}})
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765)
     args = parser.parse_args()
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
-    print(f"COVE preview: http://127.0.0.1:{args.port}", flush=True)
     try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.server_close()
+        credentials()
+    except APIError as exc:
+        parser.error(exc.message + " 请设置 ZHIHU_ACCESS_SECRET 环境变量。")
+    os.environ.setdefault("COVE_PUBLIC_ORIGIN", f"http://127.0.0.1:{args.port}")
+    print(f"COVE preview: http://127.0.0.1:{args.port}", flush=True)
+    with make_server("127.0.0.1", args.port, application) as httpd:
+        httpd.serve_forever()
