@@ -90,6 +90,7 @@
                             stroke-width="1.7"
                         >
                             <circle cx="11" cy="11" r="7"></circle>
+
                             <line
                                 x1="16.5"
                                 y1="16.5"
@@ -110,6 +111,7 @@
                             id="searchSubmit"
                             aria-label="搜索"
                         >
+
                             <svg
                                 width="18"
                                 height="18"
@@ -129,6 +131,7 @@
                                     points="12 5 19 12 12 19"
                                 ></polyline>
                             </svg>
+
                         </button>
 
                     </div>
@@ -189,8 +192,11 @@
                             <div class="card-visual visual-ai">
 
                                 <div class="lens-outer">
+
                                     <div class="lens-inner"></div>
+
                                     <div class="lens-core"></div>
+
                                 </div>
 
                             </div>
@@ -221,10 +227,13 @@
                             <div class="card-visual visual-chinese">
 
                                 <div class="branch branch-one"></div>
+
                                 <div class="branch branch-two"></div>
 
                                 <div class="flower flower-one"></div>
+
                                 <div class="flower flower-two"></div>
+
                                 <div class="flower flower-three"></div>
 
                             </div>
@@ -255,6 +264,7 @@
                             <div class="card-visual visual-street">
 
                                 <div class="street-light light-one"></div>
+
                                 <div class="street-light light-two"></div>
 
                                 <div class="street-shadow"></div>
@@ -289,7 +299,9 @@
                             <div class="card-visual visual-quiet">
 
                                 <div class="fabric-shape fabric-one"></div>
+
                                 <div class="fabric-shape fabric-two"></div>
+
                                 <div class="fabric-shape fabric-three"></div>
 
                             </div>
@@ -320,7 +332,9 @@
                             <div class="card-visual visual-brand">
 
                                 <div class="brand-line line-one"></div>
+
                                 <div class="brand-line line-two"></div>
+
                                 <div class="brand-line line-three"></div>
 
                             </div>
@@ -351,9 +365,13 @@
                     id="searchEmpty"
                 >
 
-                    <span class="empty-symbol">⌕</span>
+                    <span class="empty-symbol">
+                        ⌕
+                    </span>
 
-                    <p>未找到相关趋势</p>
+                    <p>
+                        未找到相关趋势
+                    </p>
 
                     <button id="resetSearch">
                         返回全部趋势
@@ -369,21 +387,178 @@
             ========================== -->
 
             <section
-                class="page-section secondary-page"
+                class="page-section inspiration-page"
                 id="inspirationPage"
             >
 
-                <div class="minimal-page-content">
+                <div class="inspiration-shell">
 
-                    <div class="page-label">
-                        INSPIRATION
+                    <div class="inspiration-header">
+
+                        <div>
+
+                            <div class="page-label">
+                                INSPIRATION
+                            </div>
+
+                            <h1>
+                                灵感
+                            </h1>
+
+                        </div>
+
+                        <button
+                            class="publish-work-button"
+                            id="publishWorkButton"
+                        >
+                            <span>
+                                发布作品
+                            </span>
+
+                            <span>
+                                ↗
+                            </span>
+                        </button>
+
                     </div>
 
-                    <h1>
-                        灵感
-                    </h1>
 
-                    <div class="page-line"></div>
+                    <!-- PRIMARY FILTERS -->
+
+                    <div
+                        class="inspiration-filters"
+                        aria-label="灵感分类"
+                    >
+
+                        <button
+                            class="inspiration-filter active"
+                            data-filter="recommended"
+                        >
+                            为你推荐
+                        </button>
+
+                        <button
+                            class="inspiration-filter"
+                            data-filter="latest"
+                        >
+                            最新
+                        </button>
+
+                        <button
+                            class="inspiration-filter"
+                            data-filter="editorial"
+                        >
+                            编辑精选
+                        </button>
+
+                        <button
+                            class="inspiration-filter"
+                            data-filter="摄影"
+                        >
+                            摄影
+                        </button>
+
+                        <button
+                            class="inspiration-filter"
+                            data-filter="造型"
+                        >
+                            造型
+                        </button>
+
+                        <button
+                            class="inspiration-filter"
+                            data-filter="妆发"
+                        >
+                            妆发
+                        </button>
+
+                        <button
+                            class="inspiration-filter"
+                            data-filter="品牌视觉"
+                        >
+                            品牌视觉
+                        </button>
+
+                        <button
+                            class="inspiration-filter more-filter"
+                            data-filter="more"
+                            aria-expanded="false"
+                            aria-controls="moreFilterPanel"
+                        >
+
+                            <span>
+                                更多
+                            </span>
+
+                            <span class="filter-chevron">
+                                ⌄
+                            </span>
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- SECONDARY FILTERS -->
+
+                    <div
+                        class="more-filter-panel"
+                        id="moreFilterPanel"
+                        hidden
+                    >
+
+                        <button
+                            class="sub-filter"
+                            data-filter="AI 摄影"
+                        >
+                            AI 摄影
+                        </button>
+
+                        <button
+                            class="sub-filter"
+                            data-filter="新中式"
+                        >
+                            新中式
+                        </button>
+
+                        <button
+                            class="sub-filter"
+                            data-filter="商业街拍"
+                        >
+                            商业街拍
+                        </button>
+
+                        <button
+                            class="sub-filter"
+                            data-filter="Quiet Luxury"
+                        >
+                            Quiet Luxury
+                        </button>
+
+                        <button
+                            class="sub-filter"
+                            data-filter="Y2K"
+                        >
+                            Y2K
+                        </button>
+
+                        <button
+                            class="sub-filter"
+                            data-filter="未来复古"
+                        >
+                            未来复古
+                        </button>
+
+                    </div>
+
+
+                    <!-- INSPIRATION MASONRY GRID -->
+
+                    <div
+                        class="inspiration-grid"
+                        id="inspirationGrid"
+                    >
+                    </div>
 
                 </div>
 
@@ -427,7 +602,9 @@
 
                 <div class="panel-header">
 
-                    <span>Profile</span>
+                    <span>
+                        Profile
+                    </span>
 
                     <button
                         class="panel-close"
@@ -441,7 +618,9 @@
                 <div class="panel-body">
 
                     <div class="profile-placeholder">
+
                         <div class="profile-circle"></div>
+
                     </div>
 
                     <div class="profile-name">
@@ -472,8 +651,15 @@
                         class="back-button"
                         id="backButton"
                     >
-                        <span>←</span>
-                        <span>返回</span>
+
+                        <span>
+                            ←
+                        </span>
+
+                        <span>
+                            返回
+                        </span>
+
                     </button>
 
                     <span class="detail-category">
@@ -506,8 +692,10 @@
 
                     <div class="detail-grid">
 
-                        <div class="detail-visual" id="detailVisual">
-
+                        <div
+                            class="detail-visual"
+                            id="detailVisual"
+                        >
                         </div>
 
 
@@ -524,9 +712,17 @@
 
                             <div class="detail-meta">
 
-                                <span>行业洞察</span>
-                                <span>·</span>
-                                <span>AI 分析</span>
+                                <span>
+                                    行业洞察
+                                </span>
+
+                                <span>
+                                    ·
+                                </span>
+
+                                <span>
+                                    AI 分析
+                                </span>
 
                             </div>
 
