@@ -405,43 +405,72 @@ brand.addEventListener("click", () => {
    INSIGHTS SEARCH
 ========================================= */
 
-function performSearch() {
-    const keyword = searchInput.value.trim().toLowerCase();
+const zhihuResults = document.getElementById("zhihuResults");
+const zhihuStatus = document.getElementById("zhihuStatus");
+const zhihuResultList = document.getElementById("zhihuResultList");
+const trendSection = document.querySelector(".trend-section");
+let searchController;
+let searchVersion = 0;
 
-    let visibleCount = 0;
-
-    trendCards.forEach((card) => {
-        const cardKeywords =
-            card.dataset.keywords.toLowerCase();
-
-        const title =
-            card.querySelector(".card-title")
-                .textContent
-                .toLowerCase();
-
-        const isMatch =
-            keyword === "" ||
-            cardKeywords.includes(keyword) ||
-            title.includes(keyword);
-
-        if (isMatch) {
-            card.style.display = "block";
-            visibleCount++;
-        } else {
-            card.style.display = "none";
-        }
-    });
-
-    if (visibleCount === 0 && keyword !== "") {
-        searchEmpty.classList.add("visible");
-    } else {
-        searchEmpty.classList.remove("visible");
-    }
-
-    if (keyword !== "") {
-        showToast("已更新搜索结果");
+async function performSearch() {
+    const query = searchInput.value.trim();
+    if (!query) { resetTrendCards(); return; }
+    searchController?.abort();
+    const version = ++searchVersion;
+    const controller = new AbortController();
+    searchController = controller;
+    const timeout = setTimeout(() => controller.abort(), 35000);
+    zhihuResults.hidden = false;
+    trendSection.hidden = true;
+    searchEmpty.classList.remove("visible");
+    zhihuResultList.replaceChildren();
+    zhihuStatus.textContent = `正在搜索「${query}」…`;
+    zhihuResults.setAttribute("aria-busy", "true");
+    try {
+        const response = await fetch("/api/insights/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query }),
+            signal: controller.signal
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error?.message || "搜索服务暂不可用。");
+        if (version !== searchVersion) return;
+        zhihuStatus.textContent = data.items.length
+            ? `「${query}」 · ${data.items.length} 条结果 · 以下为搜索摘要，点击查看原文。`
+            : `未找到「${query}」的相关内容，请换一个关键词。`;
+        data.items.forEach((item) => {
+            const card = document.createElement("article");
+            card.className = "zhihu-result-card";
+            const title = document.createElement("h3");
+            const link = document.createElement("a");
+            link.textContent = item.title;
+            link.href = item.url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            title.append(link);
+            const author = document.createElement("p");
+            author.className = "result-author";
+            author.textContent = `${item.author} · 知乎`;
+            const summary = document.createElement("p");
+            summary.className = "result-summary";
+            summary.textContent = item.summary;
+            card.append(title, author, summary);
+            zhihuResultList.append(card);
+        });
+    } catch (error) {
+        if (version !== searchVersion) return;
+        zhihuStatus.textContent = error.name === "AbortError"
+            ? "搜索超时，请重新点击搜索。"
+            : (error instanceof SyntaxError || error instanceof TypeError)
+                ? "无法连接搜索服务，请确认本地后端已启动后重试。" : error.message;
+    } finally {
+        clearTimeout(timeout);
+        if (version === searchVersion) zhihuResults.setAttribute("aria-busy", "false");
     }
 }
+
+ document.getElementById("clearZhihuSearch").addEventListener("click", resetTrendCards);
 
 
 /* =========================================
@@ -468,6 +497,12 @@ searchInput.addEventListener("input", () => {
 ========================================= */
 
 function resetTrendCards() {
+    searchVersion++;
+    searchController?.abort();
+    zhihuResults.hidden = true;
+    zhihuResults.setAttribute("aria-busy", "false");
+    zhihuResultList.replaceChildren();
+    trendSection.hidden = false;
     trendCards.forEach((card) => {
         card.style.display = "block";
     });

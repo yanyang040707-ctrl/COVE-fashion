@@ -102,6 +102,8 @@
                         <input
                             type="text"
                             id="searchInput"
+                            maxlength="200"
+                            aria-label="搜索知乎时尚趋势与经验"
                             placeholder="搜索时尚趋势与知识"
                             autocomplete="off"
                         >
@@ -138,6 +140,12 @@
 
                 </div>
 
+
+                <section id="zhihuResults" class="zhihu-results" hidden aria-label="知乎搜索结果">
+                    <div class="results-heading"><h2>知乎 · 社区观点</h2><button id="clearZhihuSearch" type="button">返回趋势</button></div>
+                    <p id="zhihuStatus" role="status" aria-live="polite"></p>
+                    <div id="zhihuResultList" class="zhihu-result-list"></div>
+                </section>
 
                 <!-- TREND CARDS -->
 
