@@ -290,9 +290,8 @@ const brand = document.getElementById("brand");
 const searchInput = document.getElementById("searchInput");
 const searchSubmit = document.getElementById("searchSubmit");
 
-const trendCards = document.querySelectorAll(".trend-card");
+const trendCards = document.querySelectorAll(".daily-card");
 const trendCarousel = document.getElementById("trendCarousel");
-
 const searchEmpty = document.getElementById("searchEmpty");
 const resetSearch = document.getElementById("resetSearch");
 
@@ -347,6 +346,16 @@ let toastTimer;
 ========================================= */
 
 function switchPage(pageName) {
+    // profilePage / workPage are registered later in the file; resolve them lazily.
+    if (pageName === 'profile' && !pageSections.profile) {
+        pageSections.profile = document.getElementById('profilePage');
+    }
+    if (pageName === 'work' && !pageSections.work) {
+        pageSections.work = document.getElementById('workPage');
+    }
+    if (pageName === 'report' && !pageSections.report) {
+        pageSections.report = document.getElementById('reportPage');
+    }
     if (!pageSections[pageName]) return;
 
     currentPage = pageName;
@@ -408,36 +417,78 @@ brand.addEventListener("click", () => {
 const zhihuResults = document.getElementById("zhihuResults");
 const zhihuStatus = document.getElementById("zhihuStatus");
 const zhihuResultList = document.getElementById("zhihuResultList");
+const reportHeading = document.getElementById("reportHeading");
 const trendSection = document.querySelector(".trend-section");
 let searchController;
 let searchVersion = 0;
 
+const REPORT_META = {
+ shooting:{label:'COVE / SHOOTING PLAN',file:'COVE-拍摄方案.md',heading:'你的拍摄方案',done:'方案已生成'},
+ palette:{label:'COVE / COLOR REPORT',file:'COVE-配色报告.md',heading:'你的配色报告',done:'配色报告已生成'},
+ trend:{label:'COVE / TREND REPORT',file:'COVE-趋势报告.md',heading:'你的趋势报告',done:'趋势报告已生成'},
+ general:{label:'COVE / INSIGHT REPORT',file:'COVE-洞察报告.md',heading:'你的洞察报告',done:'洞察报告已生成'}
+};
+
 function renderShootingReport(data) {
  const report=data.report;
+ const kind=REPORT_META[report.type]?report.type:'shooting';
+ const meta=REPORT_META[kind];
  const root=document.createElement('div');root.className='shoot-report';
  function el(tag,text,className){const node=document.createElement(tag);if(text)node.textContent=text;if(className)node.className=className;return node;}
  function section(title){const part=el('section',null,'shoot-section');part.append(el('h3',title));root.append(part);return part;}
- function list(title,items){const part=section(title),ul=el('ul');items.forEach(item=>ul.append(el('li',item)));part.append(ul);}
- function refs(item){return item.source_ids.length?'参考知乎来源 '+item.source_ids.map(id=>'['+id+']').join(' '):'AI 创作建议';}
- const header=el('header',null,'shoot-header');header.append(el('span','COVE / SHOOTING PLAN','shoot-label'),el('h2',report.title),el('p',report.summary));
- const download=el('button','下载方案 ↓','shoot-download');download.type='button';download.onclick=()=>{
-  const lines=['# '+report.title,report.summary,'\n## 策划假设',...report.assumptions,'\n## 选址',...report.locations.map(l=>`${l.name}\n${l.reason}\n时间：${l.timing}\n核实：${l.verify}\n${refs(l)}`),'\n## 造型',...report.styling,'\n## 分镜',...report.shots.map((s,i)=>`${i+1}. ${s.title} · ${s.location}\n机位：${s.framing}\n动作：${s.pose}\n用光：${s.light}\n焦段：${s.lens}\n${refs(s)}`),'\n## 行程',...report.schedule,'\n## 准备清单',...report.checklist,'\n## 来源说明',report.source_note,data.warning,...data.items.map((s,i)=>`[${i+1}] ${s.title}\n${s.url}`)];
-  const url=URL.createObjectURL(new Blob([lines.join('\n\n')],{type:'text/markdown;charset=utf-8'}));const a=el('a');a.href=url;a.download='COVE-拍摄方案.md';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ function list(title,items){if(!items||!items.length)return;const part=section(title),ul=el('ul');items.forEach(item=>ul.append(el('li',item)));part.append(ul);}
+ function refs(item){return item.source_ids&&item.source_ids.length?'参考知乎来源 '+item.source_ids.map(id=>'['+id+']').join(' '):'AI 创作建议';}
+ let step=0;const no=()=>String(++step).padStart(2,'0')+' / ';
+ const header=el('header',null,'shoot-header');header.append(el('span',meta.label,'shoot-label'),el('h2',report.title),el('p',report.summary));
+ const download=el('button','下载报告 ↓','shoot-download');download.type='button';download.onclick=()=>{
+  const block=(title,items)=>items&&items.length?['\n## '+title,...items]:[];
+  let lines=['# '+report.title,report.summary,...block('策划假设',report.assumptions)];
+  if(kind==='shooting')lines=lines.concat(block('选址',report.locations.map(l=>`${l.name}\n${l.reason}\n时间：${l.timing}\n核实：${l.verify}\n${refs(l)}`)),block('造型',report.styling),block('分镜',report.shots.map((s,i)=>`${i+1}. ${s.title} · ${s.location}\n机位：${s.framing}\n动作：${s.pose}\n用光：${s.light}\n焦段：${s.lens}\n${refs(s)}`)),block('行程',report.schedule),block('准备清单',report.checklist));
+  if(kind==='palette')lines=lines.concat(block('核心色彩',report.colors.map(c=>`${c.name} ${c.hex}\n调性：${c.mood}\n应用：${c.usage}\n${refs(c)}`)),block('配色组合',report.combinations.map(c=>`${c.name}：${c.hexes.join(' + ')}\n${c.scene}\n${refs(c)}`)),block('材质呼应',report.materials),block('落地应用',report.applications),block('风险提示',report.cautions));
+  if(kind==='trend')lines=lines.concat(block('趋势信号',report.signals.map(s=>`${s.name}（确定性 ${s.confidence}）\n${s.detail}\n${refs(s)}`)),block('驱动因素',report.drivers),block('关键单品与元素',report.keyitems),block('落地建议',report.actions),block('风险提示',report.cautions));
+  if(kind==='general')lines=lines.concat(block('分析要点',report.points.map(p=>`${p.name}\n${p.detail}\n${refs(p)}`)),block('建议',report.actions),block('风险提示',report.cautions));
+  lines=lines.concat(['\n## 来源说明',report.source_note],data.warning?[data.warning]:[],data.items.map((s,i)=>`[${i+1}] ${s.title}\n${s.url}`));
+  const url=URL.createObjectURL(new Blob([lines.join('\n\n')],{type:'text/markdown;charset=utf-8'}));const a=el('a');a.href=url;a.download=meta.file;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  };header.append(download);root.append(header);
  if(data.warning)root.append(el('p',data.warning,'shoot-notice'));
- list('01 / 策划假设',report.assumptions);
- const locations=section('02 / 去哪里拍');const grid=el('div',null,'shoot-location-grid');report.locations.forEach((item,i)=>{const card=el('article',null,'shoot-location');card.append(el('span',String(i+1).padStart(2,'0'),'shoot-label'),el('h4',item.name),el('p',item.reason),el('p','建议时间 · '+item.timing),el('p','出发前核实 · '+item.verify,'shoot-muted'),el('small',refs(item)));grid.append(card);});locations.append(grid);
- list('03 / 造型与视觉',report.styling);
- const shots=section('04 / 分镜与角度');shots.append(el('p','构图示意为通用机位图，不是场地实景；实际效果随焦段、距离与环境变化。','shoot-muted'));
- const shotGrid=el('div',null,'shoot-shot-grid');
- const diagrams={low:['低机位 · 仰拍','M30 105 145 38','M0 104 260 75'],eye:['平视 · 视线高度','M30 70 145 70','M0 86 260 86'],high:['高机位 · 俯拍','M30 25 145 84','M0 64 260 99'],detail:['近景 · 局部特写','M55 63 136 63','M0 92 260 92']};
- report.shots.forEach((shot,i)=>{const card=el('article',null,'shoot-shot');const art=el('div',null,'shoot-diagram');const [label,ray,horizon]=diagrams[shot.angle];
- art.innerHTML=`<svg viewBox="0 0 260 145" role="img" aria-label="${label}构图示意"><path d="M86 0V145M174 0V145M0 48H260M0 97H260" stroke="#39313f" stroke-dasharray="3 5" fill="none"/><path d="${horizon}" stroke="#75627e" fill="none"/><circle cx="151" cy="40" r="11" fill="none" stroke="#cbb7de" stroke-width="2"/><path d="M151 52v41m0-30-25 16m25-16 22 17m-22 13-16 34m16-34 24 29" stroke="#cbb7de" stroke-width="2" fill="none"/><path d="${ray}" stroke="#d4bbf4" stroke-width="2" stroke-dasharray="5 4" fill="none"/><text x="10" y="137" fill="#bda7d1" font-size="9">CAMERA → MODEL</text></svg>`;
- art.append(el('span',label));card.append(art,el('h4',String(i+1).padStart(2,'0')+' / '+shot.title),el('small',shot.location));
- for(const [name,value] of [['机位',shot.framing],['动作',shot.pose],['用光',shot.light],['焦段',shot.lens]]){const p=el('p');p.append(el('strong',name+' · '),document.createTextNode(value));card.append(p);}card.append(el('small',refs(shot)));shotGrid.append(card);
- });shots.append(shotGrid);list('05 / 拍摄行程',report.schedule);list('06 / 出发清单',report.checklist);
- const sourceSection=section('07 / 知乎参考与创作说明');sourceSection.append(el('p',report.source_note,'shoot-muted'));data.items.forEach((item,i)=>{const card=el('article',null,'shoot-source'),a=el('a',`[${i+1}] ${item.title}`);a.href=item.url;a.target='_blank';a.rel='noopener noreferrer';card.append(a,el('small',item.author+' · 知乎'),el('p',item.summary));sourceSection.append(card);});
+ list(no()+'策划假设',report.assumptions);
+ if(kind==='shooting'){
+  const locations=section(no()+'去哪里拍');const grid=el('div',null,'shoot-location-grid');report.locations.forEach((item,i)=>{const card=el('article',null,'shoot-location');card.append(el('span',String(i+1).padStart(2,'0'),'shoot-label'),el('h4',item.name),el('p',item.reason),el('p','建议时间 · '+item.timing),el('p','出发前核实 · '+item.verify,'shoot-muted'),el('small',refs(item)));grid.append(card);});locations.append(grid);
+  list(no()+'造型与视觉',report.styling);
+  const shots=section(no()+'分镜与角度');shots.append(el('p','构图示意为通用机位图，不是场地实景；实际效果随焦段、距离与环境变化。','shoot-muted'));
+  const shotGrid=el('div',null,'shoot-shot-grid');
+  const diagrams={low:['低机位 · 仰拍','M30 105 145 38','M0 104 260 75'],eye:['平视 · 视线高度','M30 70 145 70','M0 86 260 86'],high:['高机位 · 俯拍','M30 25 145 84','M0 64 260 99'],detail:['近景 · 局部特写','M55 63 136 63','M0 92 260 92']};
+  report.shots.forEach((shot,i)=>{const card=el('article',null,'shoot-shot');const art=el('div',null,'shoot-diagram');const [label,ray,horizon]=diagrams[shot.angle]||diagrams.eye;
+  art.innerHTML=`<svg viewBox="0 0 260 145" role="img" aria-label="${label}构图示意"><path d="M86 0V145M174 0V145M0 48H260M0 97H260" stroke="#39313f" stroke-dasharray="3 5" fill="none"/><path d="${horizon}" stroke="#75627e" fill="none"/><circle cx="151" cy="40" r="11" fill="none" stroke="#cbb7de" stroke-width="2"/><path d="M151 52v41m0-30-25 16m25-16 22 17m-22 13-16 34m16-34 24 29" stroke="#cbb7de" stroke-width="2" fill="none"/><path d="${ray}" stroke="#d4bbf4" stroke-width="2" stroke-dasharray="5 4" fill="none"/><text x="10" y="137" fill="#bda7d1" font-size="9">CAMERA → MODEL</text></svg>`;
+  art.append(el('span',label));card.append(art,el('h4',String(i+1).padStart(2,'0')+' / '+shot.title),el('small',shot.location));
+  for(const [name,value] of [['机位',shot.framing],['动作',shot.pose],['用光',shot.light],['焦段',shot.lens]]){const p=el('p');p.append(el('strong',name+' · '),document.createTextNode(value));card.append(p);}card.append(el('small',refs(shot)));shotGrid.append(card);
+  });shots.append(shotGrid);list(no()+'拍摄行程',report.schedule);list(no()+'出发清单',report.checklist);
+ }
+ if(kind==='palette'){
+  const palette=section(no()+'核心色彩');const grid=el('div',null,'shoot-color-grid');
+  report.colors.forEach(color=>{const card=el('article',null,'shoot-color');const chip=el('div',null,'shoot-chip');chip.style.background=color.hex;
+   const code=el('span',color.hex,'shoot-chip-code');chip.append(code);card.append(chip,el('h4',color.name));
+   for(const [name,value] of [['调性',color.mood],['应用',color.usage]]){const p=el('p');p.append(el('strong',name+' · '),document.createTextNode(value));card.append(p);}
+   card.append(el('small',refs(color)));grid.append(card);});palette.append(grid);
+  const combos=section(no()+'配色组合');report.combinations.forEach(combo=>{const card=el('article',null,'shoot-combo');
+   const bar=el('div',null,'shoot-combo-bar');combo.hexes.forEach(hex=>{const cell=el('span');cell.style.background=hex;cell.title=hex;bar.append(cell);});
+   card.append(el('h4',combo.name),bar,el('small',combo.hexes.join('  ·  ')),el('p',combo.scene),el('small',refs(combo)));combos.append(card);});
+  list(no()+'材质呼应',report.materials);list(no()+'落地应用',report.applications);list(no()+'风险提示',report.cautions);
+ }
+ if(kind==='trend'){
+  const signals=section(no()+'趋势信号');report.signals.forEach((item,i)=>{const card=el('article',null,'shoot-signal');
+   const head=el('div',null,'shoot-signal-head');head.append(el('span',String(i+1).padStart(2,'0'),'shoot-label'),el('span','确定性 '+item.confidence,'shoot-confidence shoot-confidence-'+({'高':'high','中':'mid','低':'low'}[item.confidence]||'mid')));
+   card.append(head,el('h4',item.name),el('p',item.detail),el('small',refs(item)));signals.append(card);});
+  list(no()+'驱动因素',report.drivers);list(no()+'关键单品与元素',report.keyitems);list(no()+'落地建议',report.actions);list(no()+'风险提示',report.cautions);
+ }
+ if(kind==='general'){
+  const points=section(no()+'分析要点');report.points.forEach((item,i)=>{const card=el('article',null,'shoot-point');
+   card.append(el('span',String(i+1).padStart(2,'0'),'shoot-label'),el('h4',item.name),el('p',item.detail),el('small',refs(item)));points.append(card);});
+  list(no()+'建议',report.actions);list(no()+'风险提示',report.cautions);
+ }
+ const sourceSection=section(no()+'知乎参考与创作说明');sourceSection.append(el('p',report.source_note,'shoot-muted'));data.items.forEach((item,i)=>{const card=el('article',null,'shoot-source'),a=el('a',`[${i+1}] ${item.title}`);a.href=item.url;a.target='_blank';a.rel='noopener noreferrer';card.append(a,el('small',item.author+' · 知乎'),el('p',item.summary));sourceSection.append(card);});
  zhihuResultList.append(root);
+ return meta;
 }
 
 async function performSearch() {
@@ -452,7 +503,8 @@ async function performSearch() {
     trendSection.hidden = true;
     searchEmpty.classList.remove("visible");
     zhihuResultList.replaceChildren();
-    zhihuStatus.textContent = `正在检索知乎内容并制作「${query}」的拍摄方案，通常需要 1–3 分钟…`;
+    reportHeading.textContent = "你的报告";
+    zhihuStatus.textContent = `正在检索知乎内容并生成「${query}」的报告，通常需要 1–3 分钟…`;
     zhihuResults.setAttribute("aria-busy", "true");
     try {
         const response = await fetch("/api/insights/report", {
@@ -464,8 +516,9 @@ async function performSearch() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error?.message || "搜索服务暂不可用。");
         if (version !== searchVersion) return;
-        zhihuStatus.textContent = `方案已生成 · ${data.items.length} 条知乎参考 · AI 创作建议`;
-        renderShootingReport(data);
+        const meta = renderShootingReport(data);
+        reportHeading.textContent = meta.heading;
+        zhihuStatus.textContent = `${meta.done} · ${data.items.length} 条知乎参考 · AI 创作建议`;
     } catch (error) {
         if (version !== searchVersion) return;
         zhihuStatus.textContent = error.name === "AbortError"
@@ -512,7 +565,8 @@ function resetTrendCards() {
     zhihuResultList.replaceChildren();
     trendSection.hidden = false;
     trendCards.forEach((card) => {
-        card.style.display = "block";
+        // Cards are flex containers; clear the inline override instead of forcing block.
+        card.style.removeProperty("display");
     });
 
     searchEmpty.classList.remove("visible");
@@ -569,8 +623,6 @@ document.querySelectorAll('[data-insight-query]').forEach(button => {
         searchInput.scrollIntoView({behavior:'smooth',block:'center'});
     });
 });
-document.getElementById('topicsPrev').onclick = () => trendCarousel.scrollBy({left:-520,behavior:'smooth'});
-document.getElementById('topicsNext').onclick = () => trendCarousel.scrollBy({left:520,behavior:'smooth'});
 
 
 /* =========================================
@@ -798,6 +850,13 @@ function renderInspirationWorks(filter = "recommended") {
         });
 
         inspirationGrid.appendChild(card);
+
+        // Cards are filtered, so resolve the index in the source array.
+        const sourceIndex = inspirationWorks.indexOf(work);
+        card.classList.add('inspiration-card-clickable');
+        card.addEventListener('click', () => {
+            if (typeof openWorkDetail === 'function') openWorkDetail(sourceIndex);
+        });
     });
 }
 
@@ -1703,9 +1762,16 @@ try { savedJobIds = new Set(JSON.parse(localStorage.getItem("cove-saved-jobs") |
 const jobList = document.getElementById("jobList");
 const jobDetail = document.getElementById("jobDetail");
 const jobDialog = document.getElementById("jobActionDialog");
-function jobAction(title, text) {
+function jobAction(title, text, destructive) {
  document.getElementById("jobDialogTitle").textContent = title;
  document.getElementById("jobDialogText").textContent = text;
+ const confirm = document.getElementById("confirmJobDialog");
+ const close = document.getElementById("closeJobDialog");
+ // Reuse one dialog for plain notices and for destructive confirmations.
+ jobDialog.dataset.mode = destructive ? 'withdraw' : 'notice';
+ confirm.textContent = destructive ? '确认撤销' : '知道了';
+ confirm.classList.toggle('job-dialog-danger', Boolean(destructive));
+ close.textContent = destructive ? '再想想' : '关闭';
  jobDialog.showModal();
 }
 function toggleJobSave(id) {
@@ -1715,7 +1781,11 @@ function toggleJobSave(id) {
 }
 let jobBrowseScroll = 0;
 function jobGallery(job) {
- return Array.from({length:4},(_,i)=>inspirationWorks[(job.id*3+i)%inspirationWorks.length]).map(work=>`<img src="${work.image}" alt="示例视觉：${work.title}" loading="lazy">`).join('');
+ if (job.images && job.images.length) {
+  return job.images.map(image => `<img src="${image.src}" alt="${escapeHTML(image.name || job.title)}" loading="lazy">`).join('');
+ }
+ const seed=job.seed||job.id;
+ return Array.from({length:4},(_,i)=>inspirationWorks[(seed*3+i)%inspirationWorks.length]).map(work=>`<img src="${work.image}" alt="示例视觉：${work.title}" loading="lazy">`).join('');
 }
 function jobPublisher(job) {
  return `<div class="job-publisher"><span class="job-logo">${job.logo}</span><div><strong>${job.company}</strong><p>${job.kind} · ${job.city}</p></div></div>`;
@@ -1729,9 +1799,12 @@ function renderJobDetail(job) {
  if(!job)return;
  selectedJob=job.id;jobBrowseScroll=window.scrollY;
  document.getElementById('jobsBrowse').hidden=true;jobDetail.hidden=false;
- jobDetail.innerHTML=`<button class="job-back">← 返回全部机会</button><div class="job-feature"><div class="job-feature-copy"><span class="job-seeking">正在寻找 · ${job.role} / ${job.type==='paid'?'商业付费':'互勉共创'}</span><h1>${job.title}</h1><p class="job-green-pay">${job.pay}</p><p class="job-feature-meta">◷ ${job.date}<br>⌖ ${job.city} · ${job.format}</p></div>${jobPublisher(job)}<div class="job-gallery job-gallery-large">${jobGallery(job)}</div></div><div class="job-detail-cta"><button class="job-apply">申请合作 ↗</button><button class="job-save" aria-label="收藏职位" aria-pressed="${savedJobIds.has(job.id)}">${savedJobIds.has(job.id)?'♥':'♡'}</button></div><div class="job-detail-prose"><h2>合作详情 <span>/ DETAIL</span></h2><p>${job.description}</p><h3>期待这样的你</h3><ul>${job.needs.map(n=>`<li>${n}</li>`).join('')}</ul><dl class="job-facts"><div><dt>项目城市</dt><dd>${job.city}</dd></div><div><dt>合作方式</dt><dd>${job.format}</dd></div><div><dt>报酬</dt><dd>${job.pay}</dd></div><div><dt>预计档期</dt><dd>${job.date}</dd></div></dl><h3>关于发布者</h3><p>${job.host}</p><div class="apply-agreement"><span>✳</span><p>${job.fair}</p></div><p class="job-example-note">示例项目与视觉参考，仅用于页面体验。</p></div>`;
+ jobDetail.innerHTML=`<button class="job-back">← 返回全部机会</button><div class="job-feature"><div class="job-feature-copy"><span class="job-seeking">正在寻找 · ${job.role} / ${job.type==='paid'?'商业付费':'互勉共创'}</span><h1>${job.title}</h1><p class="job-green-pay">${job.pay}</p><p class="job-feature-meta">◷ ${job.date}<br>⌖ ${job.city} · ${job.format}</p></div>${jobPublisher(job)}<div class="job-gallery job-gallery-large">${jobGallery(job)}</div></div><div class="job-detail-cta">${job.publishedByMe?`<button class="job-withdraw job-withdraw-large">撤销发布</button>`:`<button class="job-apply">申请合作 ↗</button>`}<button class="job-save" aria-label="收藏职位" aria-pressed="${savedJobIds.has(job.id)}">${savedJobIds.has(job.id)?'♥':'♡'}</button></div><div class="job-detail-prose"><h2>合作详情 <span>/ DETAIL</span></h2><p>${job.description}</p><h3>期待这样的你</h3><ul>${job.needs.map(n=>`<li>${n}</li>`).join('')}</ul><dl class="job-facts"><div><dt>项目城市</dt><dd>${job.city}</dd></div><div><dt>合作方式</dt><dd>${job.format}</dd></div><div><dt>报酬</dt><dd>${job.pay}</dd></div><div><dt>预计档期</dt><dd>${job.date}</dd></div></dl><h3>关于发布者</h3><p>${job.host}</p><div class="apply-agreement"><span>✳</span><p>${job.fair}</p></div><p class="job-example-note">示例项目与视觉参考，仅用于页面体验。</p></div>`;
  jobDetail.querySelector('.job-back').onclick=closeJobDetail;
- jobDetail.querySelector('.job-apply').onclick=()=>openApplication(job);
+ const apply=jobDetail.querySelector('.job-apply');
+ if(apply)apply.onclick=()=>openApplication(job);
+ const withdraw=jobDetail.querySelector('.job-withdraw');
+ if(withdraw)withdraw.onclick=()=>withdrawJob(job.id);
  jobDetail.querySelector('.job-save').onclick=()=>{
   toggleJobSave(job.id);const button=jobDetail.querySelector('.job-save');button.textContent=savedJobIds.has(job.id)?'♥':'♡';button.setAttribute('aria-pressed',String(savedJobIds.has(job.id)));
  };
@@ -1744,9 +1817,35 @@ function renderJobs() {
  document.getElementById("jobResultCount").textContent = filtered.length;
  document.getElementById("savedJobCount").textContent = savedJobIds.size;
  if (!filtered.some(j => j.id === selectedJob)) selectedJob = filtered[0]?.id;
- const emptyMessage = jobView === "applied" ? '你还没有申请记录<br>当前申请为流程预览，尚未接入真实申请服务。' : jobView === "published" ? '你还没有发布合作机会<br>发布服务尚未接入，敬请期待。' : '暂时没有符合条件的机会<br>试试其他筛选条件，或点击重置。';
- jobList.innerHTML = filtered.length ? filtered.map(j=>`<article class="job-project-card"><button class="job-project-open" data-open="${j.id}" aria-label="查看${j.title}详情"><div class="job-project-summary"><div><span class="job-seeking">正在寻找 · ${j.role}</span><h2>${j.title}</h2><strong class="job-green-pay">${j.pay}</strong></div><div class="job-project-meta"><span>◷ ${j.time}</span><span>⌖ ${j.city}</span><span>${j.type==='paid'?'商业付费':'互勉共创'}</span></div></div>${jobPublisher(j)}<div class="job-gallery">${jobGallery(j)}</div></button></article>`).join('') : `<div class="jobs-empty">${emptyMessage}</div>`;
+ const emptyMessage = jobView === "applied" ? '你还没有申请记录<br>当前申请为流程预览，尚未接入真实申请服务。' : jobView === "published" ? '你还没有发布合作机会<br>点击右上角「＋ 发布合作机会」发布第一个项目。' : '暂时没有符合条件的机会<br>试试其他筛选条件，或点击重置。';
+ jobList.innerHTML = filtered.length ? filtered.map(j=>`<article class="job-project-card">${j.publishedByMe?`<div class="job-owner-bar"><span class="job-owner-tag">我发布的</span><button class="job-withdraw" data-withdraw="${j.id}" type="button">撤销发布</button></div>`:''}<button class="job-project-open" data-open="${j.id}" aria-label="查看${j.title}详情"><div class="job-project-summary"><div><span class="job-seeking">正在寻找 · ${j.role}</span><h2>${j.title}</h2><strong class="job-green-pay">${j.pay}</strong></div><div class="job-project-meta"><span>◷ ${j.time}</span><span>⌖ ${j.city}</span><span>${j.type==='paid'?'商业付费':'互勉共创'}</span></div></div>${jobPublisher(j)}<div class="job-gallery">${jobGallery(j)}</div></button></article>`).join('') : `<div class="jobs-empty">${emptyMessage}</div>`;
  jobList.querySelectorAll('[data-open]').forEach(button=>button.onclick=()=>renderJobDetail(jobData.find(j=>j.id===Number(button.dataset.open))));
+ jobList.querySelectorAll('[data-withdraw]').forEach(button=>button.onclick=()=>withdrawJob(Number(button.dataset.withdraw)));
+ // Profile helpers are declared later in the file; guard the first render.
+ if (typeof updateProfileCounts === 'function') updateProfileCounts();
+}
+
+// Withdraw a self-published job: confirm first, then drop it from the in-memory list.
+let pendingWithdrawId = null;
+function withdrawJob(id) {
+ const job = jobData.find(j => j.id === id);
+ if (!job || !job.publishedByMe) return;
+ pendingWithdrawId = id;
+ jobAction('确认撤销这个项目？', `「${job.title}」撤销后将从列表移除，此操作无法恢复。`, true);
+}
+function confirmWithdraw() {
+ if (pendingWithdrawId === null) return;
+ const index = jobData.findIndex(j => j.id === pendingWithdrawId);
+ if (index > -1) {
+  const [removed] = jobData.splice(index, 1);
+  if (selectedJob === removed.id) selectedJob = null;
+  savedJobIds.delete(removed.id);
+  closeJobDetail();
+  renderJobs();
+  if (typeof renderProfilePublished === 'function') renderProfilePublished();
+  showToast('已撤销「' + removed.title + '」');
+ }
+ pendingWithdrawId = null;
 }
 document.querySelectorAll('[data-job-view]').forEach(button => {
  button.addEventListener('click', () => {
@@ -1765,8 +1864,13 @@ document.getElementById("savedJobs").onclick=()=>{jobSavedOnly=!jobSavedOnly;con
 ["jobCity","jobRole","jobPay"].forEach(id=>document.getElementById(id).addEventListener("change",renderJobs));
 document.getElementById("jobKeyword").addEventListener("input",renderJobs);
 document.getElementById("resetJobs").onclick=()=>{["jobCity","jobRole","jobPay","jobKeyword"].forEach(id=>document.getElementById(id).value="");jobSavedOnly=false;document.getElementById("savedJobs").classList.remove("active");document.getElementById("savedJobs").setAttribute("aria-pressed","false");jobType="all";document.getElementById("jobTypeFilter").value="all";renderJobs();};
-document.getElementById("publishJob").onclick=()=>jobAction("让合适的人，找到你的项目", "发布合作机会将支持项目类型、岗位、城市、报酬与作品使用约定。当前为界面预览，发布服务尚未接入。商业付费与互勉共创将分别展示，帮助创作者清楚了解合作条件。");
-["closeJobDialog","confirmJobDialog"].forEach(id=>document.getElementById(id).onclick=()=>jobDialog.close());
+document.getElementById("publishJob").onclick=()=>openPublish();
+document.getElementById("closeJobDialog").onclick=()=>{pendingWithdrawId=null;jobDialog.close();};
+document.getElementById("confirmJobDialog").onclick=()=>{
+ const withdrawing = jobDialog.dataset.mode === 'withdraw';
+ jobDialog.close();
+ if (withdrawing) confirmWithdraw();
+};
 renderJobs();
 
 const applyDrawer = document.getElementById('applyDrawer');
@@ -1809,3 +1913,839 @@ applyForm.addEventListener('submit',event=>{
  applyForm.hidden=true;document.getElementById('applySuccess').hidden=false;document.getElementById('applySubmit').disabled=true;document.getElementById('applyEdit').focus();
 });
 document.getElementById('applyEdit').onclick=()=>{applyForm.hidden=false;document.getElementById('applySuccess').hidden=true;document.getElementById('applySubmit').disabled=false;applyForm.elements.name.focus();};
+
+/* =========================================
+   IMAGE UPLOAD HELPERS
+========================================= */
+
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+// Read picked files into data URLs so previews survive without a backend.
+function readImageFiles(fileList, limit, maxBytes) {
+ const files = Array.from(fileList || []);
+ const accepted = [];
+ const problems = [];
+ files.forEach(file => {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+   problems.push(`${file.name}：格式不支持`);
+  } else if (file.size > (maxBytes || MAX_IMAGE_BYTES)) {
+   problems.push(`${file.name}：超过 ${Math.round((maxBytes || MAX_IMAGE_BYTES) / 1024 / 1024)}MB`);
+  } else {
+   accepted.push(file);
+  }
+ });
+ const usable = accepted.slice(0, limit);
+ if (accepted.length > limit) problems.push(`最多 ${limit} 张，多余的已忽略`);
+ return Promise.all(usable.map(file => new Promise(resolve => {
+  const reader = new FileReader();
+  reader.onload = () => resolve({src: reader.result, name: file.name});
+  reader.onerror = () => resolve(null);
+  reader.readAsDataURL(file);
+ }))).then(results => ({images: results.filter(Boolean), problems}));
+}
+
+function renderImagePreview(container, images, onRemove) {
+ container.replaceChildren();
+ images.forEach((image, index) => {
+  const cell = document.createElement('div');
+  cell.className = 'upload-thumb';
+  const img = document.createElement('img');
+  img.src = image.src;
+  img.alt = image.name || '已选图片';
+  const remove = document.createElement('button');
+  remove.type = 'button';
+  remove.className = 'upload-thumb-remove';
+  remove.textContent = '×';
+  remove.setAttribute('aria-label', '移除这张图片');
+  remove.onclick = () => onRemove(index);
+  cell.append(img, remove);
+  container.append(cell);
+ });
+}
+
+/* =========================================
+   PUBLISH A PROJECT
+========================================= */
+
+const publishDrawer = document.getElementById('publishDrawer');
+const publishForm = document.getElementById('publishForm');
+const publishImageInput = document.getElementById('publishImageInput');
+const publishImagePreview = document.getElementById('publishImagePreview');
+let publishPreviousOverflow = '';
+let publishImages = [];
+
+function drawPublishImages() {
+ renderImagePreview(publishImagePreview, publishImages, index => {
+  publishImages.splice(index, 1);
+  drawPublishImages();
+ });
+ document.getElementById('publishImageCount').textContent = `已选 ${publishImages.length} 张`;
+}
+
+publishImageInput.addEventListener('change', () => {
+ readImageFiles(publishImageInput.files, 4 - publishImages.length).then(({images, problems}) => {
+  publishImages = publishImages.concat(images).slice(0, 4);
+  drawPublishImages();
+  document.getElementById('publishError').textContent = problems.join('；');
+  publishImageInput.value = '';
+ });
+});
+
+// Published jobs render through innerHTML templates; escape every user string once.
+function escapeJobText(job) {
+ const fields = ['title','company','logo','city','kind','format','date','time','pay','description','host','fair'];
+ fields.forEach(key => {job[key] = escapeHTML(job[key]);});
+ job.needs = job.needs.map(escapeHTML);
+ return job;
+}
+
+function publishTypeFields() {
+ const paid = publishForm.elements.type.value === 'paid';
+ document.getElementById('publishPaidFields').hidden = !paid;
+ document.getElementById('publishTfpFields').hidden = paid;
+ publishForm.elements.amount.disabled = !paid;
+ publishForm.elements.payNote.disabled = !paid;
+ publishForm.elements.resources.disabled = paid;
+}
+
+function openPublish() {
+ document.getElementById('publishError').textContent = '';
+ publishForm.hidden = false;
+ document.getElementById('publishSuccess').hidden = true;
+ document.getElementById('publishSubmit').disabled = false;
+ publishTypeFields();
+ drawPublishImages();
+ publishPreviousOverflow = document.body.style.overflow;
+ document.body.style.overflow = 'hidden';
+ publishDrawer.showModal();
+ publishDrawer.querySelector('.apply-scroll').scrollTop = 0;
+ publishForm.elements.title.focus({preventScroll:true});
+}
+
+publishForm.elements.type.addEventListener('change', publishTypeFields);
+publishDrawer.addEventListener('close', () => {document.body.style.overflow = publishPreviousOverflow;});
+document.getElementById('publishClose').onclick = () => publishDrawer.close();
+
+publishForm.addEventListener('submit', event => {
+ event.preventDefault();
+ const error = document.getElementById('publishError');
+ const value = name => publishForm.elements[name].value.trim();
+ const paid = publishForm.elements.type.value === 'paid';
+ const needs = value('needs').split('\n').map(line => line.trim()).filter(Boolean);
+ if (!needs.length) {
+  error.textContent = '请至少填写一条对合作者的要求。';
+  publishForm.elements.needs.focus();
+  return;
+ }
+ if (paid) {
+  const amount = publishForm.elements.amount.value.trim();
+  if (!amount || Number(amount) <= 0) {
+   error.textContent = '商业付费项目请填写大于 0 的报酬金额。';
+   publishForm.elements.amount.focus();
+   return;
+  }
+ } else if (!value('resources')) {
+  error.textContent = '互勉共创请说明你能提供的资源。';
+  publishForm.elements.resources.focus();
+  return;
+ }
+ error.textContent = '';
+ const amount = paid ? Number(publishForm.elements.amount.value) : 0;
+ const payNote = value('payNote');
+ const job = {
+  id: Date.now(),
+  seed: jobData.length + 1,
+  title: value('title'),
+  company: value('company'),
+  logo: value('company').slice(0, 1).toUpperCase(),
+  type: publishForm.elements.type.value,
+  role: publishForm.elements.role.value,
+  city: value('city'),
+  kind: paid ? '商业项目' : '共创项目',
+  format: value('format'),
+  date: value('date'),
+  time: value('date'),
+  amount,
+  pay: paid ? `¥${amount.toLocaleString('zh-CN')}${payNote ? ' · ' + payNote : ''}` : '互勉共创 · ' + value('resources'),
+  description: value('description'),
+  needs,
+  host: value('company') + ' 发布于 COVE',
+  fair: value('fair'),
+  images: publishImages.slice(),
+  applied: false,
+  publishedByMe: true
+ };
+ const preview = document.getElementById('publishPreview');
+ preview.replaceChildren();
+ const card = document.createElement('article');
+ card.className = 'publish-preview-card';
+ const seeking = document.createElement('span');
+ seeking.className = 'job-seeking';
+ seeking.textContent = `正在寻找 · ${job.role} / ${paid ? '商业付费' : '互勉共创'}`;
+ const heading = document.createElement('h4');
+ heading.textContent = job.title;
+ const pay = document.createElement('strong');
+ pay.className = 'job-green-pay';
+ pay.textContent = job.pay;
+ const meta = document.createElement('p');
+ meta.textContent = `⌖ ${job.city} · ${job.format}　◷ ${job.date}`;
+ card.append(seeking, heading, pay, meta);
+ preview.append(card);
+ // Escape only after the DOM preview read the raw values.
+ jobData.unshift(escapeJobText(job));
+ publishImages = [];
+ drawPublishImages();
+ renderJobs();
+ renderProfilePublished();
+ publishForm.hidden = true;
+ document.getElementById('publishSuccess').hidden = false;
+ document.getElementById('publishSubmit').disabled = true;
+ publishDrawer.querySelector('.apply-scroll').scrollTop = 0;
+ document.getElementById('publishEdit').focus();
+});
+
+document.getElementById('publishEdit').onclick = () => {
+ publishForm.hidden = false;
+ document.getElementById('publishSuccess').hidden = true;
+ document.getElementById('publishSubmit').disabled = false;
+ publishForm.reset();
+ publishImages = [];
+ drawPublishImages();
+ publishTypeFields();
+ publishForm.elements.title.focus();
+};
+
+/* =========================================
+   PROFILE PAGE
+========================================= */
+
+const profilePage = document.getElementById('profilePage');
+const profileGrid = document.getElementById('profileGrid');
+const profilePublishedList = document.getElementById('profilePublishedList');
+const uploadDrawer = document.getElementById('uploadDrawer');
+const uploadForm = document.getElementById('uploadForm');
+const uploadInput = document.getElementById('uploadInput');
+const uploadPreview = document.getElementById('uploadPreview');
+const profileEditDialog = document.getElementById('profileEditDialog');
+const profileEditForm = document.getElementById('profileEditForm');
+const avatarInput = document.getElementById('avatarInput');
+
+const profileData = {
+ name: 'COVE Member',
+ role: '摄影师',
+ city: '上海',
+ bio: '专注时尚与人像影像创作，关注材质、光线与东方美学的当代表达。',
+ avatar: '',
+ works: []
+};
+// `var` is hoisted, so early renderJobs() calls can safely check it.
+profileState = profileData;
+let uploadImages = [];
+let pendingAvatar = '';
+let profileTab = 'works';
+let profilePreviousOverflow = '';
+
+pageSections.profile = profilePage;
+
+var profileState = null;
+// When set, the profile page renders this creator instead of the logged-in user.
+var viewingProfile = null;
+
+function activeProfile() {
+ return viewingProfile || profileState || null;
+}
+
+function updateProfileCounts() {
+ // renderJobs() may run before this block's declarations are initialized.
+ const target = activeProfile();
+ if (!target) return;
+ const guest = Boolean(viewingProfile);
+ const published = guest ? 0 : jobData.filter(job => job.publishedByMe).length;
+ document.getElementById('profileWorkCount').textContent = target.works.length;
+ document.getElementById('profilePublishCount').textContent = published;
+ document.getElementById('profileSavedCount').textContent = guest ? 0 : savedJobIds.size;
+}
+
+function renderProfileHero() {
+ const target = activeProfile();
+ if (!target) return;
+ const guest = Boolean(viewingProfile);
+ document.getElementById('profileDisplayName').textContent = target.name;
+ document.getElementById('profileRole').textContent = guest
+  ? `${target.role} · ${target.city}`
+  : `${target.role} · Creative Industry Platform`;
+ document.getElementById('profileCity').textContent = target.city;
+ document.getElementById('profileBio').textContent = target.bio;
+ document.getElementById('profileOwnActions').hidden = guest;
+ document.getElementById('profileGuestActions').hidden = !guest;
+ document.getElementById('profileBack').hidden = !guest;
+ const avatar = document.getElementById('profileAvatar');
+ avatar.replaceChildren();
+ if (target.avatar) {
+  const img = document.createElement('img');
+  img.src = target.avatar;
+  img.alt = target.name + ' 的头像';
+  avatar.append(img);
+ } else {
+  avatar.textContent = target.name.slice(0, 1).toUpperCase();
+ }
+ updateProfileCounts();
+}
+
+function renderProfileWorks() {
+ const target = activeProfile();
+ if (!target) return;
+ const guest = Boolean(viewingProfile);
+ profileGrid.replaceChildren();
+ const empty = document.getElementById('profileWorksEmpty');
+ empty.hidden = target.works.length > 0;
+ empty.innerHTML = guest
+  ? '该创作者还没有公开作品'
+  : '还没有作品<br>点击「上传作品 ＋」添加你的第一组图片。';
+ target.works.forEach((work, index) => {
+  const card = document.createElement('article');
+  card.className = 'profile-work';
+  const img = document.createElement('img');
+  img.src = work.image;
+  img.alt = work.title;
+  img.loading = 'lazy';
+  const info = document.createElement('div');
+  info.className = 'profile-work-info';
+  const title = document.createElement('strong');
+  title.textContent = work.title;
+  const meta = document.createElement('small');
+  meta.textContent = work.tags && work.tags.length ? `${work.category} · ${work.tags.join(' ')}` : work.category;
+  info.append(title, meta);
+  card.append(img, info);
+  if (!guest) {
+   const remove = document.createElement('button');
+   remove.type = 'button';
+   remove.className = 'profile-work-remove';
+   remove.textContent = '×';
+   remove.setAttribute('aria-label', '删除作品 ' + work.title);
+   remove.onclick = () => {
+    target.works.splice(index, 1);
+    renderProfileWorks();
+    updateProfileCounts();
+    showToast('已删除「' + work.title + '」');
+   };
+   card.append(remove);
+  }
+  profileGrid.append(card);
+ });
+ updateProfileCounts();
+}
+
+function renderProfilePublished() {
+ if (!profilePublishedList) return;
+ const mine = jobData.filter(job => job.publishedByMe);
+ profilePublishedList.replaceChildren();
+ document.getElementById('profilePublishedEmpty').hidden = mine.length > 0;
+ mine.forEach(job => {
+  const card = document.createElement('article');
+  card.className = 'profile-published-card';
+  const head = document.createElement('div');
+  head.className = 'profile-published-head';
+  const seeking = document.createElement('span');
+  seeking.className = 'job-seeking';
+  seeking.textContent = `正在寻找 · ${job.role} / ${job.type === 'paid' ? '商业付费' : '互勉共创'}`;
+  const withdraw = document.createElement('button');
+  withdraw.type = 'button';
+  withdraw.className = 'job-withdraw';
+  withdraw.textContent = '撤销发布';
+  withdraw.onclick = () => withdrawJob(job.id);
+  head.append(seeking, withdraw);
+  const title = document.createElement('h4');
+  title.textContent = job.title;
+  const pay = document.createElement('strong');
+  pay.className = 'job-green-pay';
+  pay.textContent = job.pay;
+  const meta = document.createElement('p');
+  meta.textContent = `⌖ ${job.city} · ${job.format}　◷ ${job.date}`;
+  card.append(head, title, pay, meta);
+  profilePublishedList.append(card);
+ });
+ updateProfileCounts();
+}
+
+function setProfileTab(tab) {
+ profileTab = tab;
+ document.querySelectorAll('[data-profile-tab]').forEach(button => {
+  const active = button.dataset.profileTab === tab;
+  button.classList.toggle('active', active);
+  button.setAttribute('aria-pressed', String(active));
+ });
+ document.getElementById('profileWorksPane').hidden = tab !== 'works';
+ document.getElementById('profilePublishedPane').hidden = tab !== 'published';
+ if (tab === 'published') renderProfilePublished();
+}
+
+document.querySelectorAll('[data-profile-tab]').forEach(button => {
+ button.addEventListener('click', () => setProfileTab(button.dataset.profileTab));
+});
+
+function openProfilePage(asGuest) {
+ closeProfile();
+ if (!asGuest) viewingProfile = null;
+ // Keep navigation working even if a later render step fails.
+ pageSections.profile = pageSections.profile || document.getElementById('profilePage');
+ switchPage('profile');
+ try {
+  renderProfileHero();
+  renderProfileWorks();
+  if (viewingProfile) {
+   setProfileTab('works');
+  } else {
+   renderProfilePublished();
+   setProfileTab(profileTab);
+  }
+  document.querySelector('[data-profile-tab="published"]').hidden = Boolean(viewingProfile);
+ } catch (error) {
+  showToast('主页内容渲染出错，请刷新页面重试');
+ }
+ window.scrollTo(0, 0);
+}
+
+document.getElementById('profileBack').addEventListener('click', () => {
+ viewingProfile = null;
+ switchPage('work');
+});
+
+document.getElementById('profileFollowButton').addEventListener('click', event => {
+ const on = event.target.textContent.trim() === '＋ 关注';
+ event.target.textContent = on ? '已关注' : '＋ 关注';
+ showToast(on ? '已关注 ' + activeProfile().name : '已取消关注');
+});
+
+document.getElementById('profileContactButton').addEventListener('click', () => {
+ showToast('合作邀约功能尚未接入，当前为界面预览');
+});
+
+document.getElementById('profileEnter').addEventListener('click', () => openProfilePage(false));
+
+/* ---------- upload works ---------- */
+
+function drawUploadImages() {
+ renderImagePreview(uploadPreview, uploadImages, index => {
+  uploadImages.splice(index, 1);
+  drawUploadImages();
+ });
+ document.getElementById('uploadCount').textContent = `已选 ${uploadImages.length} 张`;
+}
+
+uploadInput.addEventListener('change', () => {
+ readImageFiles(uploadInput.files, 9 - uploadImages.length).then(({images, problems}) => {
+  uploadImages = uploadImages.concat(images).slice(0, 9);
+  drawUploadImages();
+  document.getElementById('uploadError').textContent = problems.join('；');
+  uploadInput.value = '';
+ });
+});
+
+function openUpload() {
+ document.getElementById('uploadError').textContent = '';
+ uploadForm.hidden = false;
+ document.getElementById('uploadSuccess').hidden = true;
+ document.getElementById('uploadSubmit').disabled = false;
+ drawUploadImages();
+ profilePreviousOverflow = document.body.style.overflow;
+ document.body.style.overflow = 'hidden';
+ uploadDrawer.showModal();
+ uploadDrawer.querySelector('.apply-scroll').scrollTop = 0;
+}
+
+document.getElementById('profileUploadButton').onclick = openUpload;
+document.getElementById('uploadClose').onclick = () => uploadDrawer.close();
+uploadDrawer.addEventListener('close', () => {document.body.style.overflow = profilePreviousOverflow;});
+
+uploadForm.addEventListener('submit', event => {
+ event.preventDefault();
+ const error = document.getElementById('uploadError');
+ if (!uploadImages.length) {
+  error.textContent = '请至少选择一张图片。';
+  return;
+ }
+ const title = uploadForm.elements.title.value.trim();
+ const category = uploadForm.elements.category.value;
+ const tags = uploadForm.elements.tags.value.trim().split(/\s+/).filter(Boolean).slice(0, 6);
+ uploadImages.forEach((image, index) => {
+  profileData.works.unshift({
+   image: image.src,
+   title: uploadImages.length > 1 ? `${title} ${String(index + 1).padStart(2, '0')}` : title,
+   category,
+   tags
+  });
+ });
+ uploadImages = [];
+ drawUploadImages();
+ uploadForm.reset();
+ renderProfileWorks();
+ setProfileTab('works');
+ uploadForm.hidden = true;
+ document.getElementById('uploadSuccess').hidden = false;
+ document.getElementById('uploadSubmit').disabled = true;
+ document.getElementById('uploadAgain').focus();
+});
+
+document.getElementById('uploadAgain').onclick = () => {
+ uploadForm.hidden = false;
+ document.getElementById('uploadSuccess').hidden = true;
+ document.getElementById('uploadSubmit').disabled = false;
+ uploadForm.elements.title.focus();
+};
+
+/* ---------- edit profile ---------- */
+
+avatarInput.addEventListener('change', () => {
+ readImageFiles(avatarInput.files, 1, 4 * 1024 * 1024).then(({images, problems}) => {
+  document.getElementById('profileEditError').textContent = problems.join('；');
+  if (images.length) {
+   pendingAvatar = images[0].src;
+   const preview = document.getElementById('avatarPreview');
+   preview.hidden = false;
+   preview.replaceChildren();
+   const img = document.createElement('img');
+   img.src = pendingAvatar;
+   img.alt = '新头像预览';
+   preview.append(img);
+  }
+  avatarInput.value = '';
+ });
+});
+
+document.getElementById('profileEditButton').onclick = () => {
+ profileEditForm.elements.name.value = profileData.name;
+ profileEditForm.elements.role.value = profileData.role;
+ profileEditForm.elements.city.value = profileData.city;
+ profileEditForm.elements.bio.value = profileData.bio;
+ pendingAvatar = '';
+ document.getElementById('avatarPreview').hidden = true;
+ document.getElementById('profileEditError').textContent = '';
+ profilePreviousOverflow = document.body.style.overflow;
+ document.body.style.overflow = 'hidden';
+ profileEditDialog.showModal();
+};
+
+document.getElementById('profileEditClose').onclick = () => profileEditDialog.close();
+profileEditDialog.addEventListener('close', () => {document.body.style.overflow = profilePreviousOverflow;});
+
+profileEditForm.addEventListener('submit', event => {
+ event.preventDefault();
+ profileData.name = profileEditForm.elements.name.value.trim() || 'COVE Member';
+ profileData.role = profileEditForm.elements.role.value;
+ profileData.city = profileEditForm.elements.city.value.trim() || '上海';
+ profileData.bio = profileEditForm.elements.bio.value.trim();
+ if (pendingAvatar) profileData.avatar = pendingAvatar;
+ renderProfileHero();
+ profileEditDialog.close();
+ showToast('资料已更新');
+});
+
+renderProfileHero();
+renderProfileWorks();
+
+/* =========================================
+   WORK DETAIL PAGE
+========================================= */
+
+const workPage = document.getElementById('workPage');
+const workImage = document.getElementById('workImage');
+const CITY_POOL = ['上海', '北京', '杭州', '广州', '伦敦', '东京'];
+const ROLE_BY_CATEGORY = {'摄影': 'Photographer', '造型': 'Stylist', '妆发': 'Makeup & Hair', '品牌视觉': 'Creative Director', '模特': 'Model'};
+const SUPPORT_ROLES = [['Creative Director', '创意总监'], ['Model', '模特'], ['Makeup & Hair', '妆发']];
+const SEED_COMMENTS = [
+ {name: 'Dmytro Zhurba', badge: 'PRO Model', text: 'Beautiful ❤', time: '6h', likes: 0},
+ {name: 'Francis Wong', badge: 'PRO Photographer', text: 'This frame is perfect ❤️', time: '1d', likes: 1}
+];
+
+let workIndex = -1;
+let workReturnPage = 'inspiration';
+
+// Derive stable credits/comments once so re-opening a work shows the same data.
+function ensureWorkDetail(work, index) {
+ if (work.detail) return work.detail;
+ const city = CITY_POOL[index % CITY_POOL.length];
+ const credits = [{
+  name: work.creator,
+  avatar: work.avatar,
+  role: ROLE_BY_CATEGORY[work.category] || 'Creative',
+  city: city,
+  owner: true
+ }];
+ SUPPORT_ROLES.slice(0, 2).forEach((pair, offset) => {
+  const mate = inspirationWorks[(index + offset + 1) % inspirationWorks.length];
+  credits.push({
+   name: mate.creator,
+   avatar: mate.avatar,
+   role: pair[0],
+   city: CITY_POOL[(index + offset + 2) % CITY_POOL.length],
+   owner: false
+  });
+ });
+ work.detail = {
+  credits: credits,
+  category: work.category,
+  monthly: (18 + (index * 7) % 40).toFixed(1) + 'k posts / mo',
+  followed: false,
+  liked: false,
+  comments: SEED_COMMENTS.map(item => Object.assign({}, item))
+ };
+ return work.detail;
+}
+
+function renderWorkCredits(detail) {
+ const box = document.getElementById('workCredits');
+ box.replaceChildren();
+ detail.credits.forEach(person => {
+  const row = document.createElement('article');
+  row.className = 'work-credit';
+  const avatar = document.createElement('img');
+  avatar.src = person.avatar;
+  avatar.alt = person.name;
+  avatar.loading = 'lazy';
+  const copy = document.createElement('div');
+  copy.className = 'work-credit-copy';
+  const nameRow = document.createElement('div');
+  nameRow.className = 'work-credit-name';
+  const link = document.createElement('button');
+  link.type = 'button';
+  link.className = 'work-credit-link';
+  link.textContent = person.name;
+  link.onclick = () => openCreatorProfile(person);
+  nameRow.append(link);
+  if (person.owner) {
+   const tag = document.createElement('span');
+   tag.className = 'work-credit-tag';
+   tag.textContent = 'Original Poster';
+   nameRow.append(tag);
+  }
+  const meta = document.createElement('small');
+  meta.textContent = `${person.role} · ${person.city}`;
+  copy.append(nameRow, meta);
+  const follow = document.createElement('button');
+  follow.type = 'button';
+  follow.className = 'work-credit-follow';
+  follow.textContent = '＋';
+  follow.setAttribute('aria-label', '关注 ' + person.name);
+  follow.onclick = () => showToast('已关注 ' + person.name + '（交互预览）');
+  row.append(avatar, copy, follow);
+  box.append(row);
+ });
+}
+
+function renderWorkComments(detail) {
+ const box = document.getElementById('workComments');
+ box.replaceChildren();
+ detail.comments.forEach(item => {
+  const row = document.createElement('article');
+  row.className = 'work-comment';
+  const head = document.createElement('div');
+  head.className = 'work-comment-head';
+  const name = document.createElement('strong');
+  name.textContent = item.name;
+  head.append(name);
+  if (item.badge) {
+   const badge = document.createElement('span');
+   badge.className = 'work-comment-badge';
+   badge.textContent = item.badge;
+   head.append(badge);
+  }
+  const text = document.createElement('p');
+  text.textContent = item.text;
+  const foot = document.createElement('div');
+  foot.className = 'work-comment-foot';
+  const like = document.createElement('button');
+  like.type = 'button';
+  like.textContent = item.likes ? `Like · ${item.likes}` : 'Like';
+  like.onclick = () => {
+   item.likes += 1;
+   renderWorkComments(detail);
+  };
+  const reply = document.createElement('button');
+  reply.type = 'button';
+  reply.textContent = 'Reply';
+  reply.onclick = () => document.querySelector('#workCommentForm input').focus();
+  const time = document.createElement('small');
+  time.textContent = item.time;
+  foot.append(like, reply, time);
+  row.append(head, text, foot);
+  box.append(row);
+ });
+ document.getElementById('workCommentCount').textContent = detail.comments.length;
+}
+
+function openWorkDetail(index) {
+ const work = inspirationWorks[index];
+ if (!work) return;
+ workIndex = index;
+ const detail = ensureWorkDetail(work, index);
+ workImage.src = work.image;
+ workImage.alt = `${work.title} by ${work.creator}`;
+ document.getElementById('workLikeCount').textContent = work.likes;
+ const likeButton = document.getElementById('workLike');
+ likeButton.setAttribute('aria-pressed', String(detail.liked));
+ likeButton.querySelector('.work-action-icon').textContent = detail.liked ? '♥' : '♡';
+ document.getElementById('workCategoryName').textContent = work.category;
+ document.getElementById('workCategoryPosts').textContent = detail.monthly;
+ const chip = document.getElementById('workFollowChip');
+ chip.textContent = detail.followed ? '已关注' : '关注';
+ chip.classList.toggle('work-chip-on', detail.followed);
+ renderWorkCredits(detail);
+ renderWorkComments(detail);
+ switchPage('work');
+ window.scrollTo(0, 0);
+}
+
+function stepWork(delta) {
+ if (!inspirationWorks.length) return;
+ const next = (workIndex + delta + inspirationWorks.length) % inspirationWorks.length;
+ openWorkDetail(next);
+}
+
+document.getElementById('workBack').addEventListener('click', () => switchPage(workReturnPage));
+document.getElementById('workPrev').addEventListener('click', () => stepWork(-1));
+document.getElementById('workNext').addEventListener('click', () => stepWork(1));
+
+document.getElementById('workLike').addEventListener('click', () => {
+ const work = inspirationWorks[workIndex];
+ if (!work) return;
+ const detail = work.detail;
+ detail.liked = !detail.liked;
+ work.likes += detail.liked ? 1 : -1;
+ document.getElementById('workLikeCount').textContent = work.likes;
+ const button = document.getElementById('workLike');
+ button.setAttribute('aria-pressed', String(detail.liked));
+ button.querySelector('.work-action-icon').textContent = detail.liked ? '♥' : '♡';
+ renderInspirationWorks(currentInspirationFilter);
+});
+
+document.getElementById('workCommentJump').addEventListener('click', () => document.querySelector('#workCommentForm input').focus());
+
+document.getElementById('workCategoryRow').addEventListener('click', () => {
+ const work = inspirationWorks[workIndex];
+ if (!work || !work.detail) return;
+ work.detail.followed = !work.detail.followed;
+ const chip = document.getElementById('workFollowChip');
+ chip.textContent = work.detail.followed ? '已关注' : '关注';
+ chip.classList.toggle('work-chip-on', work.detail.followed);
+});
+
+document.getElementById('workCommentForm').addEventListener('submit', event => {
+ event.preventDefault();
+ const input = event.target.elements.comment;
+ const text = input.value.trim();
+ if (!text) return;
+ const work = inspirationWorks[workIndex];
+ if (!work || !work.detail) return;
+ work.detail.comments.push({name: profileData.name, badge: profileData.role, text: text, time: '刚刚', likes: 0});
+ input.value = '';
+ renderWorkComments(work.detail);
+});
+
+/* ---------- creator profile ---------- */
+
+function openCreatorProfile(person) {
+ const works = inspirationWorks
+  .filter(item => item.creator === person.name)
+  .map(item => ({image: item.image, title: item.title, category: item.category, tags: item.tags}));
+ viewingProfile = {
+  name: person.name,
+  role: person.role,
+  city: person.city,
+  bio: `${person.role} based in ${person.city}. COVE 示例创作者主页，作品与资料仅用于页面体验。`,
+  avatar: person.avatar,
+  works: works
+ };
+ openProfilePage(true);
+}
+
+/* =========================================
+   INSIGHT MASCOT
+========================================= */
+
+const mascotImage = document.getElementById('mascotImage');
+
+if (mascotImage) {
+ // Durations come from the source files so each clip finishes before switching.
+ const MASCOT = {
+  idle: {src: 'assets/mascot/idle.gif', ms: 5000},
+  greet: {src: 'assets/mascot/greet.gif', ms: 4000},
+  sleep: {src: 'assets/mascot/sleep.gif', ms: 5000},
+  sway: {src: 'assets/mascot/sway.gif', ms: 3000},
+  dribble: {src: 'assets/mascot/dribble.gif', ms: 4000}
+ };
+ const RANDOM_POOL = ['idle', 'sway', 'dribble'];
+ const IDLE_SLEEP_MS = 15000;
+
+ let mascotTimer = null;
+ let sleepTimer = null;
+ let mascotState = '';
+
+ function playMascot(name, restartSameClip) {
+  const clip = MASCOT[name];
+  if (!clip) return;
+  if (mascotState !== name || restartSameClip) {
+   mascotState = name;
+   // Re-assigning the same src would not restart a GIF; add a cache-busting token.
+   mascotImage.src = clip.src + (restartSameClip ? '?t=' + Date.now() : '');
+  }
+  clearTimeout(mascotTimer);
+  if (name === 'sleep') return;
+  mascotTimer = setTimeout(playRandomMascot, clip.ms);
+ }
+
+ function playRandomMascot() {
+  const pool = RANDOM_POOL.filter(name => name !== mascotState);
+  const next = pool.length ? pool[Math.floor(Math.random() * pool.length)] : RANDOM_POOL[0];
+  playMascot(next);
+ }
+
+ function scheduleMascotSleep() {
+  clearTimeout(sleepTimer);
+  sleepTimer = setTimeout(() => playMascot('sleep'), IDLE_SLEEP_MS);
+ }
+
+ // Any interaction wakes the mascot and restarts the sleep countdown.
+ function wakeMascot() {
+  if (mascotState === 'sleep') playRandomMascot();
+  scheduleMascotSleep();
+ }
+
+ if (searchInput) {
+  searchInput.addEventListener('focus', () => {
+   clearTimeout(sleepTimer);
+   playMascot('greet', true);
+   scheduleMascotSleep();
+  });
+  searchInput.addEventListener('input', wakeMascot);
+ }
+ ['pointerdown', 'keydown'].forEach(type => {
+  document.addEventListener(type, wakeMascot, {passive: true});
+ });
+
+ playRandomMascot();
+ scheduleMascotSleep();
+}
+
+/* =========================================
+   FEATURED REPORT ARTICLE
+========================================= */
+
+const featureReportCard = document.getElementById('featureReportCard');
+const reportBack = document.getElementById('reportBack');
+
+if (featureReportCard) {
+ featureReportCard.addEventListener('click', () => {
+  pageSections.report = pageSections.report || document.getElementById('reportPage');
+  switchPage('report');
+  window.scrollTo(0, 0);
+ });
+}
+
+if (reportBack) {
+ reportBack.addEventListener('click', () => {
+  switchPage('insights');
+  window.scrollTo(0, 0);
+ });
+}

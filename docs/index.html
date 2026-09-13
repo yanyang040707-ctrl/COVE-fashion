@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COVE — Creative Industry Platform</title>
 
-    <link rel="stylesheet" href="styles.css?v=shooting-1">
+    <link rel="stylesheet" href="styles.css?v=report-2">
 </head>
 
 <body>
@@ -74,7 +74,14 @@
                 id="insightsPage"
             >
 
-                <header class="insight-intro"><div class="insight-eyebrow">COVE INSIGHTS</div></header>
+                <header class="insight-intro">
+                    <div class="insight-hero">
+                        <p class="insight-slogan">看山一搜<br>拍案就有</p>
+                        <div class="insight-mascot">
+                            <img id="mascotImage" src="assets/mascot/idle.gif" alt="COVE 助手动态形象" width="140" height="140">
+                        </div>
+                    </div>
+                </header>
                 <div class="search-wrapper">
 
                     <div class="search-box">
@@ -102,15 +109,15 @@
                             type="text"
                             id="searchInput"
                             maxlength="200"
-                            aria-label="描述拍摄需求"
-                            placeholder="例如：在上海拍一组 Y2K 模特照，帮我规划地点和机位"
+                            aria-label="描述你的问题或拍摄需求"
+                            placeholder="生成拍摄方案或时尚行业趋势"
                             autocomplete="off"
                         >
 
                         <button
                             class="search-submit"
                             id="searchSubmit"
-                            aria-label="生成拍摄方案"
+                            aria-label="生成报告"
                         >
 
                             <svg
@@ -140,14 +147,56 @@
                 </div>
 
 
-                <div class="insight-prompts"><span>从一个问题开始</span><button data-insight-query="在上海拍一组 Y2K 风格模特照，安排半天拍摄，推荐地点、造型和机位">上海 Y2K 拍摄方案 ↗</button><button data-insight-query="新中式 穿搭 避免 古装感">新中式如何避免古装感？ ↗</button><button data-insight-query="AI 时尚摄影 工作流">AI 能帮摄影师做哪些工作？ ↗</button></div>
-                <section id="zhihuResults" class="zhihu-results" hidden aria-label="拍摄方案结果">
-                    <div class="results-heading"><h2>你的拍摄方案</h2><button id="clearZhihuSearch" type="button">返回探索</button></div>
+                <div class="insight-prompts"><span>从一个问题开始</span><button data-insight-query="2026 年流行什么颜色，配色趋势是什么样">2026 年流行色报告 ↗</button><button data-insight-query="在上海拍一组 Y2K 风格模特照，安排半天拍摄，推荐地点、造型和机位">上海 Y2K 拍摄方案 ↗</button><button data-insight-query="新中式 穿搭 避免 古装感">新中式如何避免古装感？ ↗</button><button data-insight-query="AI 时尚摄影 工作流">AI 能帮摄影师做哪些工作？ ↗</button></div>
+                <section id="zhihuResults" class="zhihu-results" hidden aria-label="洞察报告结果">
+                    <div class="results-heading"><h2 id="reportHeading">你的报告</h2><button id="clearZhihuSearch" type="button">返回探索</button></div>
                     <p id="zhihuStatus" role="status" aria-live="polite"></p>
                     <div id="zhihuResultList" class="zhihu-result-list"></div>
                 </section>
 
-                <div class="trend-section"><div class="insight-section-head"><div><span class="insight-kicker">01 / EXPLORE</span><h2>猜你想找</h2></div><div class="insight-topic-nav"><span>精选专题 · 从问题深入</span><button id="topicsPrev" aria-label="上一组专题">←</button><button id="topicsNext" aria-label="下一组专题">→</button></div></div><div class="trend-carousel" id="trendCarousel"><button type="button" class="trend-card" data-id="ai-photography" data-insight-query="AI 时尚摄影 工作流"><div class="card-visual visual-ai"><div class="lens-outer"><div class="lens-inner"></div><div class="lens-core"></div></div></div><span class="topic-category">创作效率</span><div class="card-bottom"><span class="card-title">AI 与影像</span><span class="card-arrow">↗</span></div></button><button type="button" class="trend-card" data-id="new-chinese" data-insight-query="新中式 服装 设计 东方美学"><div class="card-visual visual-chinese"><div class="branch branch-one"></div><div class="branch branch-two"></div><div class="flower flower-one"></div><div class="flower flower-two"></div></div><span class="topic-category">风格研究</span><div class="card-bottom"><span class="card-title">新中式</span><span class="card-arrow">↗</span></div></button><button type="button" class="trend-card" data-id="street-fashion" data-insight-query="时尚街拍 城市 取景 摄影"><div class="card-visual visual-street"><div class="street-light"></div><div class="street-shadow"></div><div class="street-person"></div></div><span class="topic-category">拍摄现场</span><div class="card-bottom"><span class="card-title">城市与街拍</span><span class="card-arrow">↗</span></div></button><button type="button" class="trend-card" data-id="quiet-luxury" data-insight-query="静奢风 服装 面料 质感"><div class="card-visual visual-quiet"><div class="fabric-shape fabric-one"></div><div class="fabric-shape fabric-two"></div></div><span class="topic-category">材质观察</span><div class="card-bottom"><span class="card-title">静奢与质感</span><span class="card-arrow">↗</span></div></button><button type="button" class="trend-card" data-id="brand-visual" data-insight-query="时尚品牌 视觉 差异化"><div class="card-visual visual-brand"><div class="brand-line line-one"></div><div class="brand-line line-two"></div></div><span class="topic-category">商业创作</span><div class="card-bottom"><span class="card-title">品牌视觉</span><span class="card-arrow">↗</span></div></button></div></div>
+                <div class="trend-section">
+                    <div class="insight-columns">
+                        <section class="insight-col">
+                            <div class="daily-head"><h2>精选洞察报告</h2></div>
+                            <button type="button" class="feature-card" id="featureReportCard">
+                                <span class="feature-visual"></span>
+                                <span class="feature-copy">
+                                    <span class="feature-kicker">FASHION INSIGHTS</span>
+                                    <span class="feature-title">2026春夏时尚趋势：从自然主义到未来主义</span>
+                                    <span class="feature-summary">本报告深入分析 2026 春夏时装周的关键趋势，探讨自然元素与未来科技的融合，以及…</span>
+                                    <span class="feature-foot"><span>2026.09.12</span><span>→</span></span>
+                                </span>
+                            </button>
+                        </section>
+
+                        <section class="insight-col">
+                            <div class="daily-head"><h2>行业热度趋势</h2></div>
+                            <div class="heat-card">
+                                <div class="heat-chart">
+                                    <span class="heat-label">热度趋势</span>
+                                    <svg viewBox="0 0 260 130" role="img" aria-label="近三个月行业热度折线图">
+                                        <path d="M0 40H260M0 70H260M0 100H260" stroke="#241f2a" stroke-dasharray="3 5"/>
+                                        <polyline points="14,96 76,74 138,58 200,38 246,24" fill="none" stroke="#e7dced" stroke-width="2"/>
+                                        <polyline points="14,108 76,96 138,86 200,72 246,62" fill="none" stroke="#8d8296" stroke-width="2"/>
+                                        <polyline points="14,116 76,110 138,102 200,94 246,84" fill="none" stroke="#6f8fd0" stroke-width="2"/>
+                                        <g fill="#e7dced"><circle cx="14" cy="96" r="3"/><circle cx="76" cy="74" r="3"/><circle cx="138" cy="58" r="3"/><circle cx="200" cy="38" r="3"/><circle cx="246" cy="24" r="3"/></g>
+                                    </svg>
+                                    <div class="heat-axis"><span>8月</span><span>9月</span><span>10月</span></div>
+                                </div>
+                                <div class="heat-list">
+                                    <span class="heat-label">热门行业</span>
+                                    <ol>
+                                        <li><span class="heat-dot" style="background:#d4bbf4"></span><span class="heat-name">时尚</span><span class="heat-up">▲ +12.4%</span></li>
+                                        <li><span class="heat-dot" style="background:#f0a6c0"></span><span class="heat-name">美妆</span><span class="heat-up">▲ +8.7%</span></li>
+                                        <li><span class="heat-dot" style="background:#9ad0b0"></span><span class="heat-name">生活方式</span><span class="heat-up">▲ +6.3%</span></li>
+                                        <li><span class="heat-dot" style="background:#e0c48f"></span><span class="heat-name">艺术与设计</span><span class="heat-up">▲ +4.8%</span></li>
+                                        <li><span class="heat-dot" style="background:#7fa8d8"></span><span class="heat-name">科技</span><span class="heat-up">▲ +2.1%</span></li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
                 <!-- EMPTY SEARCH STATE -->
 
                 <div
@@ -423,9 +472,150 @@
                         Creative Industry Platform
                     </div>
 
+                    <button class="profile-enter" id="profileEnter" type="button">查看完整主页 ↗</button>
+
                 </div>
 
             </aside>
+
+
+            <!-- =========================
+                 PROFILE FULL PAGE
+            ========================== -->
+
+            <section class="page-section profile-page" id="profilePage">
+                <button class="work-back-link" id="profileBack" type="button" hidden>‹ 返回</button>
+                <div class="profile-hero">
+                    <div class="profile-hero-avatar" id="profileAvatar"></div>
+                    <div class="profile-hero-copy">
+                        <h1 id="profileDisplayName">COVE Member</h1>
+                        <p class="profile-hero-role" id="profileRole">摄影师 · Creative Industry Platform</p>
+                        <p class="profile-hero-location"><span>⌖</span> <span id="profileCity">上海</span></p>
+                        <p class="profile-hero-bio" id="profileBio">专注时尚与人像影像创作，关注材质、光线与东方美学的当代表达。</p>
+                        <div class="profile-hero-actions" id="profileOwnActions">
+                            <button id="profileEditButton" type="button">编辑资料</button>
+                            <button id="profileUploadButton" type="button" class="profile-ghost">上传作品 ＋</button>
+                        </div>
+                        <div class="profile-hero-actions" id="profileGuestActions" hidden>
+                            <button id="profileFollowButton" type="button">＋ 关注</button>
+                            <button id="profileContactButton" type="button" class="profile-ghost">发送合作邀约</button>
+                        </div>
+                    </div>
+                    <div class="profile-hero-stats">
+                        <div><strong id="profileWorkCount">0</strong><small>作品</small></div>
+                        <div><strong id="profilePublishCount">0</strong><small>发布中</small></div>
+                        <div><strong id="profileSavedCount">0</strong><small>收藏</small></div>
+                    </div>
+                </div>
+
+                <div class="profile-tabs" role="group" aria-label="主页内容分类">
+                    <button class="active" data-profile-tab="works" aria-pressed="true">我的作品</button>
+                    <button data-profile-tab="published" aria-pressed="false">我发布的项目</button>
+                </div>
+
+                <div id="profileWorksPane">
+                    <div class="profile-grid" id="profileGrid"></div>
+                    <div class="profile-empty" id="profileWorksEmpty" hidden>还没有作品<br>点击「上传作品 ＋」添加你的第一组图片。</div>
+                </div>
+
+                <div id="profilePublishedPane" hidden>
+                    <div class="profile-published" id="profilePublishedList"></div>
+                    <div class="profile-empty" id="profilePublishedEmpty" hidden>你还没有发布合作机会<br>去「职位」页发布一个项目吧。</div>
+                </div>
+            </section>
+
+            <!-- =========================
+                 WORK DETAIL PAGE
+            ========================== -->
+
+            <section class="page-section work-page" id="workPage">
+                <div class="work-layout">
+                    <div class="work-rail">
+                        <button id="workBack" type="button" class="work-round" aria-label="返回灵感">‹</button>
+                        <div class="work-rail-nav">
+                            <button id="workPrev" type="button" class="work-round" aria-label="上一件作品">∧</button>
+                            <button id="workNext" type="button" class="work-round" aria-label="下一件作品">∨</button>
+                        </div>
+                    </div>
+
+                    <div class="work-stage">
+                        <img id="workImage" alt="">
+                        <div class="work-actions">
+                            <button id="workLike" type="button" aria-pressed="false"><span class="work-action-icon">♡</span><span id="workLikeCount">0</span></button>
+                            <button id="workCommentJump" type="button"><span class="work-action-icon">💬</span><span id="workCommentCount">0</span></button>
+                        </div>
+                    </div>
+
+                    <aside class="work-side">
+                        <h3 class="work-side-title">Credits</h3>
+                        <div id="workCredits" class="work-credits"></div>
+
+                        <button class="work-row" id="workCategoryRow" type="button">
+                            <span id="workCategoryName">Fashion</span>
+                            <span class="work-row-meta"><span id="workCategoryPosts">32.5k posts / mo</span><span class="work-chip" id="workFollowChip">关注</span></span>
+                        </button>
+
+                        <h3 class="work-side-title">Comments</h3>
+                        <div id="workComments" class="work-comments"></div>
+
+                        <form id="workCommentForm" class="work-comment-form">
+                            <span class="work-comment-avatar" id="workMyAvatar">C</span>
+                            <input name="comment" maxlength="200" placeholder="添加评论…" aria-label="添加评论">
+                            <button type="submit" aria-label="发送评论">↑</button>
+                        </form>
+                    </aside>
+                </div>
+            </section>
+
+            <!-- =========================
+                 REPORT ARTICLE PAGE
+            ========================== -->
+
+            <section class="page-section report-page" id="reportPage">
+                <button class="work-back-link" id="reportBack" type="button">‹ 返回洞察</button>
+
+                <article class="report-article">
+                    <header class="report-head">
+                        <span class="report-kicker">FASHION INSIGHTS</span>
+                        <h1>2026春夏时尚趋势：从自然主义到未来主义</h1>
+                        <p class="report-standfirst">本报告深入分析 2026 春夏时装周的关键趋势，探讨自然元素与未来科技的融合，以及这场转向对创作者与品牌方意味着什么。</p>
+                        <div class="report-meta">
+                            <span>COVE 编辑部</span>
+                            <span>2026.09.12</span>
+                            <span>阅读约 6 分钟</span>
+                        </div>
+                    </header>
+
+                    <div class="report-cover"></div>
+
+                    <div class="report-body">
+                        <h2>这一季真正在变的是什么？</h2>
+                        <p>过去几季，「自然」更多是一种色彩取向——大地色、亚麻、原棉。2026 春夏把它推进了一步：自然不再只是配色，而是结构与工艺的出发点。可降解涂层、单一材质可回收剪裁、免拼接立体织造，这些原本属于技术议题的词，第一次成为秀场叙事的主角。</p>
+                        <p>与之并行的是另一条看似矛盾的线索：高饱和、金属感、数字原生的未来主义。两者不是对立，而是被同一批设计师同时使用——用未来的技术手段，去实现更接近自然的形态。</p>
+
+                        <h2>对创作者意味着什么？</h2>
+                        <p>如果你是摄影师或造型师，最直接的变化在于质感的处理方式。哑光与高光的对比被放大，过去「柔光打天下」的思路会让这一季的面料失去信息量。建议在同一组拍摄里预留两种光位方案，分别服务于自然肌理与科技表面。</p>
+                        <p>对于品牌方，真正的挑战不在于选哪个方向，而在于叙事一致性。当一个系列同时出现再生材料与数字印花时，消费者需要一个能同时容纳两者的解释框架，否则会被读作摇摆。</p>
+
+                        <h2>三个可以马上验证的判断</h2>
+                        <ol class="report-list">
+                            <li><strong>柔雾中性色仍是基本盘。</strong>它承担了让高饱和色安全落地的角色，不会在短期内被取代。</li>
+                            <li><strong>材质叙事比色彩叙事更耐用。</strong>色彩每季轮换，而材质决定了一个品牌能否讲三年以上的故事。</li>
+                            <li><strong>「未来感」正在去赛博化。</strong>它不再等同于荧光与机能，而更多指向工艺上的不可复制性。</li>
+                        </ol>
+
+                        <blockquote class="report-quote">真正的分水岭不在自然与未来之间，而在于你是否能让两者共用同一套工艺语言。</blockquote>
+
+                        <h2>接下来观察什么</h2>
+                        <p>建议把注意力放在供应链端的公开信息上——面料商的新品发布往往比秀场提前 6 到 9 个月释放信号。当某种工艺开始出现在多个独立品牌的胶囊系列里，它离主流化通常只剩一季。</p>
+                    </div>
+
+                    <footer class="report-foot">
+                        <p class="report-note">本报告为 COVE 示例内容，用于页面体验演示，不构成投资或商业决策依据。</p>
+                        <button type="button" class="report-cta" data-insight-query="2026 春夏时尚趋势，自然主义与未来主义的融合">用 COVE 生成我的专属报告 ↗</button>
+                    </footer>
+                </article>
+            </section>
 
 
             <!-- =========================
@@ -554,7 +744,61 @@
 <section id="applySuccess" hidden class="apply-success"><div>✓</div><h3>你的合作名片，准备好了。</h3><p>已完成申请流程预览。资料没有发送给项目方，也未保存到服务器。</p><button id="applyEdit">返回编辑</button></section></div>
 <footer class="apply-footer"><div><strong>让合适的人，看到你。</strong><small>交互预览 · 不会发送真实申请</small></div><button type="submit" form="applyForm" id="applySubmit">预览申请完成 ↗</button></footer></dialog>
 
-    <script src="script.js?v=shooting-1"></script>
+<dialog id="publishDrawer" class="apply-drawer" aria-labelledby="publishHeading">
+<div class="apply-top"><span>COVE / POST A PROJECT</span><button id="publishClose" aria-label="关闭发布面板">×</button></div>
+<div class="apply-scroll"><p class="apply-kicker">YOUR NEXT PROJECT</p><h2 id="publishHeading">让合适的人，找到你的项目。</h2><p class="apply-subtitle">把合作条件写清楚，创作者才能放心参与。</p>
+<form id="publishForm">
+<section class="apply-section"><div class="apply-section-head"><h3><span>01</span>项目是什么</h3><small>让人一眼看懂</small></div>
+<label class="apply-label">项目标题 *<input name="title" required maxlength="60" placeholder="例如：新中式秋冬系列 平面拍摄"></label>
+<div class="apply-fields"><label class="apply-label">发布方名称 *<input name="company" required maxlength="60" placeholder="品牌、工作室或个人称呼"></label><label class="apply-label">项目类型 *<select name="type" required><option value="paid">商业付费</option><option value="tfp">互勉共创 / TFP</option></select></label></div>
+<label class="apply-label">项目介绍 *<textarea name="description" required rows="3" maxlength="600" placeholder="介绍项目背景、风格方向与预期成果。"></textarea></label>
+<div class="apply-section-head apply-section-sub"><h4>项目参考图</h4><small id="publishImageCount">已选 0 张</small></div>
+<label class="upload-drop upload-drop-small" for="publishImageInput"><span class="upload-drop-icon">＋</span><strong>上传参考图或作品集图片</strong><small>JPG / PNG / WebP，单张不超过 8MB，最多 4 张；不上传将使用示例视觉</small></label>
+<input id="publishImageInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
+<div class="upload-preview" id="publishImagePreview"></div></section>
+<section class="apply-section"><div class="apply-section-head"><h3><span>02</span>找什么样的人</h3></div>
+<div class="apply-fields"><label class="apply-label">招募角色 *<select name="role" required><option>摄影师</option><option>造型师</option><option>模特</option><option>妆发师</option><option>导演 / 策划</option></select></label><label class="apply-label">项目城市 *<input name="city" required maxlength="60" placeholder="例如：上海"></label></div>
+<label class="apply-label">期待这样的你 *<textarea name="needs" required rows="3" maxlength="400" placeholder="每行一条要求，例如：&#10;有商业平面拍摄经验&#10;能配合半天档期"></textarea><small class="apply-hint">每行一条，将作为要求逐条展示。</small></label></section>
+<section class="apply-section"><div class="apply-section-head"><h3><span>03</span>合作条件</h3><small>写清楚，减少来回沟通</small></div>
+<div class="apply-fields"><label class="apply-label">合作方式 *<input name="format" required maxlength="60" placeholder="例如：半天拍摄 · 需出镜"></label><label class="apply-label">预计档期 *<input name="date" required maxlength="60" placeholder="例如：10 月中旬周末"></label></div>
+<div id="publishPaidFields" class="apply-fields"><label class="apply-label">报酬金额（元 / 项目）*<input name="amount" type="number" min="0" max="10000000" placeholder="填写项目报酬"></label><label class="apply-label">报酬包含<input name="payNote" maxlength="120" placeholder="例如：含修图与交通"></label></div>
+<div id="publishTfpFields" hidden><label class="apply-label">你能提供的资源 *<input name="resources" maxlength="180" placeholder="例如：场地、服装、妆发与成片授权"></label></div>
+<label class="apply-label">作品使用约定 *<textarea name="fair" required rows="2" maxlength="300" placeholder="例如：成片双方均可用于作品集，商用需另行沟通。"></textarea></label>
+<div class="apply-agreement"><span>✳</span><p>清晰的报酬与作品使用约定，是 COVE 对每一次合作的基本要求。</p></div>
+<label class="apply-consent"><input name="consent" type="checkbox" required><span>我已确认以上合作条件真实有效，并愿意按此与创作者沟通。</span></label></section><p id="publishError" role="alert"></p></form>
+<section id="publishSuccess" hidden class="apply-success"><div>✓</div><h3>项目预览已生成。</h3><p>已完成发布流程预览。内容仅保存在当前浏览器，未发送到服务器，刷新后不保留。</p><div id="publishPreview" class="publish-preview"></div><button id="publishEdit">返回编辑</button></section></div>
+<footer class="apply-footer"><div><strong>让项目，找到对的人。</strong><small>交互预览 · 不会真实发布</small></div><button type="submit" form="publishForm" id="publishSubmit">预览发布 ↗</button></footer></dialog>
+
+<dialog id="uploadDrawer" class="apply-drawer" aria-labelledby="uploadHeading">
+<div class="apply-top"><span>COVE / UPLOAD YOUR WORK</span><button id="uploadClose" aria-label="关闭上传面板">×</button></div>
+<div class="apply-scroll"><p class="apply-kicker">YOUR PORTFOLIO</p><h2 id="uploadHeading">让作品，先替你说话。</h2><p class="apply-subtitle">上传你的代表作，它们会出现在你的主页。</p>
+<form id="uploadForm">
+<section class="apply-section"><div class="apply-section-head"><h3><span>01</span>选择图片</h3><small id="uploadCount">已选 0 张</small></div>
+<label class="upload-drop" for="uploadInput"><span class="upload-drop-icon">＋</span><strong>点击选择图片</strong><small>支持 JPG / PNG / WebP，单张不超过 8MB，最多 9 张</small></label>
+<input id="uploadInput" name="files" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
+<div class="upload-preview" id="uploadPreview"></div></section>
+<section class="apply-section"><div class="apply-section-head"><h3><span>02</span>作品信息</h3></div>
+<label class="apply-label">作品标题 *<input name="title" required maxlength="60" placeholder="例如：Quiet Form / 静物研究"></label>
+<div class="apply-fields"><label class="apply-label">作品分类 *<select name="category" required><option>摄影</option><option>造型</option><option>妆发</option><option>模特</option><option>短片</option></select></label><label class="apply-label">标签<input name="tags" maxlength="80" placeholder="用空格分隔，例如：新中式 棚拍"></label></div>
+<div class="apply-agreement"><span>✳</span><p>请确认你拥有这些图片的使用权。图片仅保存在当前浏览器，不会上传到服务器。</p></div></section><p id="uploadError" role="alert"></p></form>
+<section id="uploadSuccess" hidden class="apply-success"><div>✓</div><h3>作品已添加到主页。</h3><p>图片仅保存在当前浏览器，刷新后不保留。</p><button id="uploadAgain">继续上传</button></section></div>
+<footer class="apply-footer"><div><strong>作品，是最好的简历。</strong><small>本地预览 · 不会上传服务器</small></div><button type="submit" form="uploadForm" id="uploadSubmit">添加到主页 ↗</button></footer></dialog>
+
+<dialog id="profileEditDialog" class="apply-drawer" aria-labelledby="profileEditHeading">
+<div class="apply-top"><span>COVE / EDIT PROFILE</span><button id="profileEditClose" aria-label="关闭编辑面板">×</button></div>
+<div class="apply-scroll"><p class="apply-kicker">ABOUT YOU</p><h2 id="profileEditHeading">完善你的创作名片。</h2><p class="apply-subtitle">让合作方更快认识你。</p>
+<form id="profileEditForm">
+<section class="apply-section"><div class="apply-section-head"><h3><span>01</span>头像</h3></div>
+<label class="upload-drop upload-drop-small" for="avatarInput"><span class="upload-drop-icon">＋</span><strong>更换头像</strong><small>JPG / PNG / WebP，不超过 4MB</small></label>
+<input id="avatarInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+<div class="avatar-preview" id="avatarPreview" hidden></div></section>
+<section class="apply-section"><div class="apply-section-head"><h3><span>02</span>基本信息</h3></div>
+<label class="apply-label">昵称 / 创作称呼 *<input name="name" required maxlength="40" placeholder="你希望被如何称呼"></label>
+<div class="apply-fields"><label class="apply-label">创作身份 *<select name="role" required><option>摄影师</option><option>造型师</option><option>模特</option><option>妆发师</option><option>导演 / 策划</option></select></label><label class="apply-label">所在城市 *<input name="city" required maxlength="40" placeholder="例如：上海"></label></div>
+<label class="apply-label">个人简介<textarea name="bio" rows="3" maxlength="200" placeholder="用一两句话介绍你的创作方向。"></textarea></label></section><p id="profileEditError" role="alert"></p></form></div>
+<footer class="apply-footer"><div><strong>让人记住你。</strong><small>本地预览 · 不会上传服务器</small></div><button type="submit" form="profileEditForm" id="profileEditSubmit">保存资料 ↗</button></footer></dialog>
+
+    <script src="script.js?v=report-2"></script>
 
 </body>
 </html>
