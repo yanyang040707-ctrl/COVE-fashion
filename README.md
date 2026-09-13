@@ -129,3 +129,16 @@ python3 -B -m unittest test_server.py
 
 测试使用模拟 HTTP 响应，不消耗额度；覆盖鉴权请求头、查询编码、缓存、链接过滤、
 缺失凭证、HTTP 错误、超时、前端接口契约和来源校验。
+
+
+## 拍摄方案生成
+
+洞察搜索现在调用 `POST /api/insights/report`，先检索知乎摘要，再通过截图指定的 OpenAI 兼容服务生成结构化拍摄方案。原 `/api/insights/search` 保留。
+
+模型服务固定使用 `https://api.openai-next.com/v1/chat/completions`，模型默认 `gpt-5.6-sol`。按项目所有者要求，模型 API 密钥已内置在 `server.py` 并随仓库提交，无需额外配置即可调用。`COVE_AI_API_KEY` 与 `COVE_AI_MODEL` 环境变量可覆盖默认值；本地也支持 `.env.local` 覆盖。密钥仅供后端调用，不返回前端。
+
+报告包含策划假设、真实地点建议、待核实事项、造型、分镜、通用机位示意、行程和准备清单，以及知乎摘要原文链接。机位图为构图示意，不是实景图。没有知乎结果或检索失败时明确标注 AI 建议；不将其呈现为知乎结论。方案支持下载 Markdown。
+
+单次生成允许最多 150 秒模型等待，加上知乎搜索时间；部署应将 Gunicorn 的 `--timeout` 和网关请求超时调整为至少 210 秒。前端等待上限 190 秒。报告按问题缓存 10 分钟，仅允许一次模型生成并发；该限流和缓存为单进程设计。
+
+验证：`python3 -B -m unittest test_server.py test_report.py`。模型未授权、额度受限、超时或返回格式不完整时页面显示失败原因，可再次点击生成重试。
