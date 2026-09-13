@@ -30,7 +30,7 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 def credentials():
-    secret = os.environ.get("ZHIHU_ACCESS_SECRET", "").strip()
+    secret = os.environ.get("ZHIHU_ACCESS_SECRET", "f77bd9499de76893d0caf727b1cbf47fc70f3d97").strip()
     if not secret:
         raise APIError(503, "AUTH_REQUIRED", "搜索服务尚未配置授权。")
     if any(ord(c) < 33 or ord(c) > 126 for c in secret):
@@ -173,6 +173,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765)
     args = parser.parse_args()
+    # Local preview only; deployed WSGI processes use environment variables.
+    config = ROOT / ".env.local"
+    if "ZHIHU_ACCESS_SECRET" not in os.environ and config.is_file():
+        for line in config.read_text(encoding="utf-8").splitlines():
+            key, separator, value = line.partition("=")
+            if separator and key.strip() == "ZHIHU_ACCESS_SECRET":
+                os.environ["ZHIHU_ACCESS_SECRET"] = value.strip()
+                break
     try:
         credentials()
     except APIError as exc:
