@@ -512,7 +512,10 @@ async function performSearch() {
     zhihuStatus.textContent = `正在检索知乎内容并生成「${query}」的报告，通常需要 1–3 分钟…`;
     zhihuResults.setAttribute("aria-busy", "true");
     try {
-        const response = await fetch("/api/insights/report", {
+        // COVE_API_BASE is empty for the local preview (same-origin) and set to
+        // the serverless origin when the static site is hosted on GitHub Pages.
+        const apiBase = (window.COVE_API_BASE || "").replace(/\/+$/, "");
+        const response = await fetch(apiBase + "/api/insights/report", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ query }),
@@ -529,7 +532,7 @@ async function performSearch() {
         zhihuStatus.textContent = error.name === "AbortError"
             ? "方案生成超时，请重新点击生成。"
             : (error instanceof SyntaxError || error instanceof TypeError)
-                ? "无法连接搜索服务，请确认本地后端已启动后重试。" : error.message;
+                ? "无法连接搜索服务，请稍后重试。" : error.message;
     } finally {
         clearTimeout(timeout);
         if (version === searchVersion) zhihuResults.setAttribute("aria-busy", "false");

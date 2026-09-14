@@ -348,7 +348,7 @@ def application(environ, start_response):
         if method != "GET":
             raise APIError(405, "METHOD_NOT_ALLOWED", "不支持该请求方法。")
         # Explicit assets only: do not serve source, credentials or directory listings.
-        assets = {"/": "index.html", "/index.html": "index.html", "/script.js": "script.js", "/styles.css": "styles.css"}
+        assets = {"/": "index.html", "/index.html": "index.html", "/script.js": "script.js", "/styles.css": "styles.css", "/config.js": "config.js"}
         for name in ("idle", "greet", "sleep", "sway", "dribble"):
             assets["/assets/mascot/" + name + ".gif"] = "assets/mascot/" + name + ".gif"
         assets["/assets/insights/feature-report.png"] = "assets/insights/feature-report.png"

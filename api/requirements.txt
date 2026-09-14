@@ -1,0 +1,4 @@
+# The serverless function only needs the Python standard library.
+# server.py's search and report pipeline uses urllib, json and threading.
+# gunicorn (see ../requirements.txt) is for self-hosting server.py and is
+# deliberately not installed here.
