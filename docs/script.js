@@ -1065,7 +1065,7 @@ subFilters.forEach((button) => {
 
 if (publishWorkButton) {
     publishWorkButton.addEventListener("click", () => {
-        showToast("发布作品功能即将开放");
+        openUpload();
     });
 }
 
@@ -2368,7 +2368,14 @@ function renderProfileWorks() {
   const meta = document.createElement('small');
   meta.textContent = work.tags && work.tags.length ? `${work.category} · ${work.tags.join(' ')}` : work.category;
   info.append(title, meta);
-  card.append(img, info);
+  const open = document.createElement('button');
+  open.type = 'button'; open.className = 'profile-work-open';
+  open.setAttribute('aria-label', '查看作品 '+work.title);
+  open.append(img, info); open.onclick = () => openPortfolioWork(work); card.append(open);
+  if (work.images && work.images.length > 1) {
+   const count = document.createElement('span'); count.className = 'profile-work-count';
+   count.textContent = work.images.length + ' 张'; card.append(count);
+  }
   if (!guest) {
    const remove = document.createElement('button');
    remove.type = 'button';
@@ -2477,74 +2484,134 @@ document.getElementById('profileEnter').addEventListener('click', () => openProf
 
 /* ---------- upload works ---------- */
 
+let uploadReading = false;
+let uploadPreviousOverflow = '';
+
 function drawUploadImages() {
  renderImagePreview(uploadPreview, uploadImages, index => {
   uploadImages.splice(index, 1);
   drawUploadImages();
  });
- document.getElementById('uploadCount').textContent = `已选 ${uploadImages.length} 张`;
+ uploadPreview.querySelectorAll('.upload-thumb').forEach((cell, index) => {
+  const cover = document.createElement('button');
+  cover.type = 'button'; cover.className = 'work-cover-button';
+  cover.textContent = index === 0 ? '封面' : '设为封面';
+  cover.setAttribute('aria-label', index === 0 ? '当前封面' : '将第 '+(index+1)+' 张设为封面');
+  cover.setAttribute('aria-pressed', String(index === 0));
+  cover.onclick = () => { uploadImages.unshift(uploadImages.splice(index, 1)[0]); drawUploadImages(); };
+  cell.append(cover);
+ });
+ document.getElementById('uploadCount').textContent = `已选 ${uploadImages.length} / 9 张`;
 }
 
-uploadInput.addEventListener('change', () => {
- readImageFiles(uploadInput.files, 9 - uploadImages.length).then(({images, problems}) => {
-  uploadImages = uploadImages.concat(images).slice(0, 9);
-  drawUploadImages();
-  document.getElementById('uploadError').textContent = problems.join('；');
-  uploadInput.value = '';
- });
+async function addWorkImages(files) {
+ if (uploadReading) return;
+ uploadReading = true;
+ const submit = document.getElementById('uploadSubmit');
+ submit.disabled = true; submit.textContent = '正在读取图片…';
+ const error = document.getElementById('uploadError');
+ try {
+  const {images, problems} = await readImageFiles(files, 9 - uploadImages.length);
+  for (const image of images) {
+   const check = new Image(); check.src = image.src;
+   try { await check.decode(); uploadImages.push(image); }
+   catch { problems.push(image.name + '：图片无法读取，请更换文件'); }
+  }
+  drawUploadImages(); error.textContent = problems.join('；');
+ } finally {
+  uploadReading = false; submit.disabled = false; submit.textContent = '预览发布 ↗'; uploadInput.value = '';
+ }
+}
+
+uploadInput.addEventListener('change', () => addWorkImages(uploadInput.files));
+const workDropzone = document.getElementById('workDropzone');
+workDropzone.addEventListener('keydown', event => {
+ if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); uploadInput.click(); }
 });
+workDropzone.addEventListener('dragover', event => { event.preventDefault(); workDropzone.classList.add('drag-over'); });
+workDropzone.addEventListener('dragleave', () => workDropzone.classList.remove('drag-over'));
+workDropzone.addEventListener('drop', event => { event.preventDefault(); workDropzone.classList.remove('drag-over'); addWorkImages(event.dataTransfer.files); });
 
 function openUpload() {
+ if (uploadDrawer.open) return;
  document.getElementById('uploadError').textContent = '';
  uploadForm.hidden = false;
  document.getElementById('uploadSuccess').hidden = true;
- document.getElementById('uploadSubmit').disabled = false;
+ document.getElementById('uploadSubmit').disabled = uploadReading;
+ document.getElementById('uploadSubmit').hidden = false;
  drawUploadImages();
- profilePreviousOverflow = document.body.style.overflow;
+ uploadPreviousOverflow = document.body.style.overflow;
  document.body.style.overflow = 'hidden';
  uploadDrawer.showModal();
  uploadDrawer.querySelector('.apply-scroll').scrollTop = 0;
+ workDropzone.focus({preventScroll:true});
 }
 
 document.getElementById('profileUploadButton').onclick = openUpload;
 document.getElementById('uploadClose').onclick = () => uploadDrawer.close();
-uploadDrawer.addEventListener('close', () => {document.body.style.overflow = profilePreviousOverflow;});
+uploadDrawer.addEventListener('close', () => {document.body.style.overflow = uploadPreviousOverflow;});
 
 uploadForm.addEventListener('submit', event => {
  event.preventDefault();
+ if (uploadReading) return;
  const error = document.getElementById('uploadError');
  if (!uploadImages.length) {
   error.textContent = '请至少选择一张图片。';
-  return;
+  workDropzone.focus(); return;
  }
- const title = uploadForm.elements.title.value.trim();
- const category = uploadForm.elements.category.value;
- const tags = uploadForm.elements.tags.value.trim().split(/\s+/).filter(Boolean).slice(0, 6);
- uploadImages.forEach((image, index) => {
-  profileData.works.unshift({
-   image: image.src,
-   title: uploadImages.length > 1 ? `${title} ${String(index + 1).padStart(2, '0')}` : title,
-   category,
-   tags
-  });
- });
- uploadImages = [];
- drawUploadImages();
- uploadForm.reset();
- renderProfileWorks();
- setProfileTab('works');
+ const value = name => uploadForm.elements[name].value.trim();
+ if (!value('title') || !value('description')) {
+  error.textContent = '请填写作品标题和介绍，不能只输入空格。'; return;
+ }
+ const work = {
+  image: uploadImages[0].src, images: uploadImages.map(image => image.src),
+  title: value('title'), category: value('category'), description: value('description'),
+  tags: [...new Set(value('tags').split(/[\s,，、#]+/).filter(Boolean))].slice(0, 6),
+  role: value('role'), location: value('location'), credits: value('credits')
+ };
+ profileData.works.unshift(work);
+ const preview = document.getElementById('uploadPublishedPreview'); preview.replaceChildren();
+ const img = document.createElement('img'); img.src = work.image; img.alt = work.title;
+ const title = document.createElement('h4'); title.textContent = work.title;
+ const meta = document.createElement('p'); meta.textContent = `${work.category} · ${work.images.length} 张图片`;
+ preview.append(img, title, meta);
+ uploadImages = []; drawUploadImages(); uploadForm.reset();
+ if (!viewingProfile) renderProfileWorks();
+ updateProfileCounts();
  uploadForm.hidden = true;
  document.getElementById('uploadSuccess').hidden = false;
- document.getElementById('uploadSubmit').disabled = true;
- document.getElementById('uploadAgain').focus();
+ document.getElementById('uploadSubmit').hidden = true;
+ uploadDrawer.querySelector('.apply-scroll').scrollTop = 0;
+ document.getElementById('uploadViewProfile').focus({preventScroll:true});
 });
 
 document.getElementById('uploadAgain').onclick = () => {
  uploadForm.hidden = false;
  document.getElementById('uploadSuccess').hidden = true;
- document.getElementById('uploadSubmit').disabled = false;
- uploadForm.elements.title.focus();
+ document.getElementById('uploadSubmit').hidden = false;
+ document.getElementById('uploadError').textContent = '';
+ workDropzone.focus();
 };
+document.getElementById('uploadViewProfile').onclick = () => {
+ uploadDrawer.close(); openProfilePage(false); setProfileTab('works');
+};
+
+const portfolioViewer = document.getElementById('portfolioViewer');
+let portfolioPreviousOverflow = '';
+function openPortfolioWork(work) {
+ document.getElementById('portfolioViewerTitle').textContent = work.title;
+ document.getElementById('portfolioViewerMeta').textContent = [work.category, work.role, work.location, ...(work.tags || [])].filter(Boolean).join(' · ');
+ document.getElementById('portfolioViewerDescription').textContent = work.description || '';
+ document.getElementById('portfolioViewerCredits').textContent = work.credits ? '创作署名 · '+work.credits : '';
+ const gallery = document.getElementById('portfolioViewerImages'); gallery.replaceChildren();
+ (work.images || [work.image]).forEach((src, index) => {
+  const img = document.createElement('img'); img.src = src; img.alt = work.title+' · '+(index+1); gallery.append(img);
+ });
+ portfolioPreviousOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden';
+ portfolioViewer.showModal(); portfolioViewer.querySelector('.apply-scroll').scrollTop = 0;
+}
+document.getElementById('portfolioViewerClose').onclick = () => portfolioViewer.close();
+portfolioViewer.addEventListener('close', () => {document.body.style.overflow = portfolioPreviousOverflow;});
 
 /* ---------- edit profile ---------- */
 

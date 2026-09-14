@@ -762,19 +762,30 @@
 <footer class="apply-footer"><div><strong>让项目，找到对的人。</strong><small>交互预览 · 不会真实发布</small></div><button type="submit" form="publishForm" id="publishSubmit">预览发布 ↗</button></footer></dialog>
 
 <dialog id="uploadDrawer" class="apply-drawer" aria-labelledby="uploadHeading">
-<div class="apply-top"><span>COVE / UPLOAD YOUR WORK</span><button id="uploadClose" aria-label="关闭上传面板">×</button></div>
-<div class="apply-scroll"><p class="apply-kicker">YOUR PORTFOLIO</p><h2 id="uploadHeading">让作品，先替你说话。</h2><p class="apply-subtitle">上传你的代表作，它们会出现在你的主页。</p>
+<div class="apply-top"><span>COVE / SHARE YOUR WORK</span><button id="uploadClose" aria-label="关闭作品发布面板">×</button></div>
+<div class="apply-scroll"><p class="apply-kicker">YOUR NEXT CREATIVE CHAPTER</p><h2 id="uploadHeading">让作品，先替你说话。</h2><p class="apply-subtitle">从一张封面开始，把你的视角、想法和创作故事分享出来。</p>
 <form id="uploadForm">
-<section class="apply-section"><div class="apply-section-head"><h3><span>01</span>选择图片</h3><small id="uploadCount">已选 0 张</small></div>
-<label class="upload-drop" for="uploadInput"><span class="upload-drop-icon">＋</span><strong>点击选择图片</strong><small>支持 JPG / PNG / WebP，单张不超过 8MB，最多 9 张</small></label>
+<section class="apply-section"><div class="apply-section-head"><h3><span>01</span>先让作品被看见</h3><small id="uploadCount" aria-live="polite">已选 0 / 9 张</small></div>
+<label class="upload-drop" id="workDropzone" for="uploadInput" role="button" tabindex="0"><span class="upload-drop-icon">＋</span><strong>点击上传，或把图片拖到这里</strong><small>JPG / PNG / WebP / GIF · 单张不超过 8MB · 最多 9 张</small></label>
 <input id="uploadInput" name="files" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
+<p class="work-upload-hint">第一张作为作品封面，可在预览中更换。多张图片会组成一件作品。</p>
 <div class="upload-preview" id="uploadPreview"></div></section>
-<section class="apply-section"><div class="apply-section-head"><h3><span>02</span>作品信息</h3></div>
-<label class="apply-label">作品标题 *<input name="title" required maxlength="60" placeholder="例如：Quiet Form / 静物研究"></label>
-<div class="apply-fields"><label class="apply-label">作品分类 *<select name="category" required><option>摄影</option><option>造型</option><option>妆发</option><option>模特</option><option>短片</option></select></label><label class="apply-label">标签<input name="tags" maxlength="80" placeholder="用空格分隔，例如：新中式 棚拍"></label></div>
-<div class="apply-agreement"><span>✳</span><p>请确认你拥有这些图片的使用权。图片仅保存在当前浏览器，不会上传到服务器。</p></div></section><p id="uploadError" role="alert"></p></form>
-<section id="uploadSuccess" hidden class="apply-success"><div>✓</div><h3>作品已添加到主页。</h3><p>图片仅保存在当前浏览器，刷新后不保留。</p><button id="uploadAgain">继续上传</button></section></div>
-<footer class="apply-footer"><div><strong>作品，是最好的简历。</strong><small>本地预览 · 不会上传服务器</small></div><button type="submit" form="uploadForm" id="uploadSubmit">添加到主页 ↗</button></footer></dialog>
+<section class="apply-section"><div class="apply-section-head"><h3><span>02</span>讲讲这件作品</h3><small>让灵感有迹可循</small></div>
+<label class="apply-label">作品标题 *<input name="title" required maxlength="60" placeholder="例如：Between Light / 光影之间"></label>
+<div class="apply-fields"><label class="apply-label">作品分类 *<select name="category" required><option>摄影</option><option>造型</option><option>妆发</option><option>模特</option><option>短片视觉</option><option>艺术创作</option></select></label><label class="apply-label">风格标签<input name="tags" maxlength="80" placeholder="新中式、自然光、时装（最多 6 个）"></label></div>
+<label class="apply-label">作品介绍 *<textarea name="description" required rows="4" maxlength="1000" placeholder="灵感从哪里来？你希望传递什么？也可以分享创作中的一个细节。"></textarea></label></section>
+<section class="apply-section"><div class="apply-section-head"><h3><span>03</span>关于这次创作</h3><small>让每一份创作被记住</small></div>
+<div class="apply-fields"><label class="apply-label">你的创作身份<select name="role"><option>摄影师</option><option>造型师</option><option>模特</option><option>妆发师</option><option>导演 / 策划</option><option>艺术创作者</option></select></label><label class="apply-label">创作地点<input name="location" maxlength="60" placeholder="例如：上海 · 一间自然光影棚"></label></div>
+<label class="apply-label">合作伙伴与署名<textarea name="credits" rows="2" maxlength="400" placeholder="例如：摄影 @林间 / 造型 @Mia / 模特 @安"></textarea></label>
+<div class="apply-agreement"><span>✳</span><p>尊重原创，也尊重每一位共同创作者。请确认图片使用权，并为合作伙伴保留署名。</p></div>
+<label class="apply-consent"><input name="consent" type="checkbox" required><span>我确认有权展示这些图片，且作品信息与署名真实准确。</span></label></section>
+<p id="uploadError" role="alert"></p></form>
+<section id="uploadSuccess" hidden class="apply-success"><div>✓</div><h3>作品预览已发布。</h3><p>已添加到你的主页。内容仅保留在当前页面，刷新后不保留。</p><article id="uploadPublishedPreview" class="work-published-preview"></article><div class="work-success-actions"><button id="uploadViewProfile" type="button">查看我的主页 ↗</button><button id="uploadAgain" type="button">再发布一件</button></div></section></div>
+<footer class="apply-footer"><div><strong>作品，是最好的简历。</strong><small>本地预览 · 不会真实上传或公开发布</small></div><button type="submit" form="uploadForm" id="uploadSubmit">预览发布 ↗</button></footer></dialog>
+
+<dialog id="portfolioViewer" class="apply-drawer" aria-labelledby="portfolioViewerTitle">
+<div class="apply-top"><span>COVE / PORTFOLIO</span><button id="portfolioViewerClose" aria-label="关闭作品详情">×</button></div>
+<div class="apply-scroll"><p class="apply-kicker">THE CREATIVE STORY</p><h2 id="portfolioViewerTitle"></h2><p id="portfolioViewerMeta" class="apply-subtitle"></p><div id="portfolioViewerImages" class="portfolio-viewer-images"></div><p id="portfolioViewerDescription" class="portfolio-viewer-description"></p><p id="portfolioViewerCredits" class="portfolio-viewer-credits"></p></div></dialog>
 
 <dialog id="profileEditDialog" class="apply-drawer" aria-labelledby="profileEditHeading">
 <div class="apply-top"><span>COVE / EDIT PROFILE</span><button id="profileEditClose" aria-label="关闭编辑面板">×</button></div>

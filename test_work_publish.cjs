@@ -1,0 +1,61 @@
+const {chromium}=require('playwright');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+(async()=>{
+ const browser=await chromium.launch({headless:true,...(process.env.COVE_TEST_CHROME?{executablePath:process.env.COVE_TEST_CHROME}:{})});
+ try{
+  const page=await browser.newPage({viewport:{width:1280,height:960}});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.route('**/*',route=>{
+   const url=new URL(route.request().url());
+   if(url.origin!=='http://127.0.0.1:8765')return route.abort();
+   const file=path.join(__dirname,'docs',url.pathname==='/'?'index.html':url.pathname);
+   return fs.existsSync(file)?route.fulfill({path:file}):route.fulfill({status:404,body:''});
+  });
+  await page.goto('http://127.0.0.1:8765/');
+  await page.locator('[data-page="inspiration"]').first().click();
+  await page.locator('#publishWorkButton').click();
+  assert.equal(await page.locator('#uploadDrawer').evaluate(el=>el.open),true);
+  await page.locator('#uploadInput').setInputFiles({name:'invalid.txt',mimeType:'text/plain',buffer:Buffer.from('test')});
+  await page.waitForFunction(()=>document.getElementById('uploadError').textContent.includes('格式不支持'));
+  await page.locator('#uploadInput').setInputFiles([path.join(__dirname,'docs/assets/insights/material-study.jpg'),path.join(__dirname,'docs/assets/insights/report-cover.png')]);
+  await page.waitForFunction(()=>document.getElementById('uploadCount').textContent==='已选 2 / 9 张');
+  const second=await page.locator('#uploadPreview img').nth(1).getAttribute('src');
+  await page.locator('#uploadPreview .work-cover-button').nth(1).click();
+  assert.equal(await page.locator('#uploadPreview img').first().getAttribute('src'),second);
+  await page.locator('#uploadForm [name="title"]').fill('Quiet Form / 材质之间');
+  await page.locator('#uploadForm [name="description"]').fill('以织物的光泽、褶皱与自然光的变化，记录柔软材质中的秩序。');
+  await page.locator('#uploadForm [name="tags"]').fill('静物、自然光 纹理');
+  await page.locator('#uploadForm [name="credits"]').fill('摄影：COVE Member / 造型：Mia');
+  await page.locator('#uploadForm [name="location"]').fill('上海 · 自然光影棚');
+  // Closing and reopening keeps the current draft.
+  await page.locator('#uploadClose').click();await page.locator('#publishWorkButton').click();
+  assert.equal(await page.locator('#uploadForm [name="title"]').inputValue(),'Quiet Form / 材质之间');
+  await page.locator('#uploadDrawer .apply-scroll').evaluate(el=>el.scrollTop=0);
+  await page.locator('#uploadDrawer').screenshot({path:'/tmp/cove-work-publish-desktop.png'});
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await page.locator('#uploadDrawer').evaluate(el=>el.scrollWidth<=el.clientWidth),true);
+  await page.locator('#uploadDrawer').screenshot({path:'/tmp/cove-work-publish-mobile.png'});
+  await page.locator('#uploadSubmit').click();
+  assert.equal(await page.locator('#uploadSuccess').isVisible(),false);
+  await page.locator('#uploadForm [name="consent"]').check();
+  await page.locator('#uploadSubmit').click();
+  await page.locator('#uploadSuccess').waitFor({state:'visible'});
+  assert.equal(await page.locator('#uploadPublishedPreview h4').textContent(),'Quiet Form / 材质之间');
+  await page.locator('#uploadViewProfile').click();
+  assert.equal(await page.locator('#profileWorkCount').textContent(),'1');
+  assert.equal(await page.locator('#profileGrid .profile-work').count(),1);
+  await page.locator('.profile-work-open').click();
+  assert.equal(await page.locator('#portfolioViewerImages img').count(),2);
+  assert.equal(await page.locator('#portfolioViewerImages img').first().getAttribute('src'),second);
+  assert.match(await page.locator('#portfolioViewerDescription').textContent(),/织物/);
+  assert.match(await page.locator('#portfolioViewerCredits').textContent(),/Mia/);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.evaluate(()=>document.body.style.overflow),'');
+  await page.locator('.profile-work-remove').click();
+  assert.equal(await page.locator('#profileWorkCount').textContent(),'0');
+  assert.deepEqual(errors,[]);
+  console.log('Work publishing passed: entry, invalid file, images, cover, draft, consent, mobile, success, grouped album, viewer, deletion, scroll restoration.');
+ }finally{await browser.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});
