@@ -452,11 +452,13 @@ function renderShootingReport(data) {
   if(kind==='palette')lines=lines.concat(block('核心色彩',report.colors.map(c=>`${c.name} ${c.hex}\n调性：${c.mood}\n应用：${c.usage}\n${refs(c)}`)),block('配色组合',report.combinations.map(c=>`${c.name}：${c.hexes.join(' + ')}\n${c.scene}\n${refs(c)}`)),block('材质呼应',report.materials),block('落地应用',report.applications),block('风险提示',report.cautions));
   if(kind==='trend')lines=lines.concat(block('趋势信号',report.signals.map(s=>`${s.name}（确定性 ${s.confidence}）\n${s.detail}\n${refs(s)}`)),block('视觉参考方向',report.visual_refs?report.visual_refs.map(v=>`${v.name}\n氛围：${v.mood}\n标签：${(v.tags||[]).join(' · ')}\n灵感搜索：${v.search}`):['（无）']),block('驱动因素',report.drivers),block('关键单品与元素',report.keyitems),block('落地建议',report.actions),block('风险提示',report.cautions));
   if(kind==='general')lines=lines.concat(block('分析要点',report.points.map(p=>`${p.name}\n${p.detail}\n${refs(p)}`)),block('视觉参考方向',report.visual_refs?report.visual_refs.map(v=>`${v.name}\n氛围：${v.mood}\n标签：${(v.tags||[]).join(' · ')}\n灵感搜索：${v.search}`):['（无）']),block('建议',report.actions),block('风险提示',report.cautions));
+  if(kind==='palette'||kind==='trend')lines=lines.concat(industryReportMarkdown(report));
   lines=lines.concat(['\n## 来源说明',report.source_note],data.warning?[data.warning]:[],data.items.map((s,i)=>`[${i+1}] ${s.title}\n${s.url}`));
   const url=URL.createObjectURL(new Blob([lines.join('\n\n')],{type:'text/markdown;charset=utf-8'}));const a=el('a');a.href=url;a.download=meta.file;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  };header.append(download);root.append(header);
  if(data.warning)root.append(el('p',data.warning,'shoot-notice'));
  list(no()+'策划假设',report.assumptions);
+ if(kind==='palette'||kind==='trend')root.append(renderIndustryVisuals(report));
  if(kind==='shooting'){
   const locations=section(no()+'去哪里拍');const grid=el('div',null,'shoot-location-grid');report.locations.forEach((item,i)=>{const card=el('article',null,'shoot-location');card.append(el('span',String(i+1).padStart(2,'0'),'shoot-label'),el('h4',item.name),el('p',item.reason),el('p','建议时间 · '+item.timing),el('p','出发前核实 · '+item.verify,'shoot-muted'),el('small',refs(item)));grid.append(card);});locations.append(grid);
   list(no()+'造型与视觉',report.styling);
