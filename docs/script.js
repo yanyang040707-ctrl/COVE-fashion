@@ -1911,7 +1911,7 @@ function jobGallery(job) {
   return job.images.map(image => `<img src="${image.src}" alt="${escapeHTML(image.name || job.title)}" loading="lazy">`).join('');
  }
  const seed=job.seed||job.id;
- return Array.from({length:4},(_,i)=>inspirationWorks[(seed*3+i)%inspirationWorks.length]).map(work=>`<img src="${work.image}" alt="示例视觉：${work.title}" loading="lazy">`).join('');
+ return Array.from({length:4},(_,i)=>inspirationWorks[(seed*3+i)%inspirationWorks.length]).map(work=>`<img src="${work.image}" alt="示例视觉：${escapeHTML(work.title)}" loading="lazy">`).join('');
 }
 function jobPublisher(job) {
  return `<div class="job-publisher"><span class="job-logo">${job.logo}</span><div><strong>${job.company}</strong><p>${job.kind} · ${job.city}</p></div></div>`;
@@ -1959,11 +1959,18 @@ function withdrawJob(id) {
  pendingWithdrawId = id;
  jobAction('确认撤销这个项目？', `「${job.title}」撤销后将从列表移除，此操作无法恢复。`, true);
 }
-function confirmWithdraw() {
+async function confirmWithdraw() {
  if (pendingWithdrawId === null) return;
  const index = jobData.findIndex(j => j.id === pendingWithdrawId);
  if (index > -1) {
-  const [removed] = jobData.splice(index, 1);
+  const candidate = jobData[index];
+  if(candidate._cloud) {
+   try {await CoveCommunity.remove(candidate._cloud);}
+   catch(error){showToast(error.message);return;}
+  }
+  const currentIndex=jobData.findIndex(job=>job.id===candidate.id);
+  if(currentIndex<0)return;
+  const [removed] = jobData.splice(currentIndex, 1);
   if (selectedJob === removed.id) selectedJob = null;
   savedJobIds.delete(removed.id);
   closeJobDetail();
@@ -2111,6 +2118,7 @@ let publishImages = [];
 
 function drawPublishImages() {
  renderImagePreview(publishImagePreview, publishImages, index => {
+  publishRequestId=null;
   publishImages.splice(index, 1);
   drawPublishImages();
  });
@@ -2118,6 +2126,8 @@ function drawPublishImages() {
 }
 
 publishImageInput.addEventListener('change', () => {
+ if(publishSaving)return;
+ publishRequestId=null;
  readImageFiles(publishImageInput.files, 4 - publishImages.length).then(({images, problems}) => {
   publishImages = publishImages.concat(images).slice(0, 4);
   drawPublishImages();
@@ -2128,7 +2138,7 @@ publishImageInput.addEventListener('change', () => {
 
 // Published jobs render through innerHTML templates; escape every user string once.
 function escapeJobText(job) {
- const fields = ['title','company','logo','city','kind','format','date','time','pay','description','host','fair'];
+ const fields = ['title','company','logo','city','kind','format','date','time','pay','description','host','fair','role'];
  fields.forEach(key => {job[key] = escapeHTML(job[key]);});
  job.needs = job.needs.map(escapeHTML);
  return job;
@@ -2161,8 +2171,11 @@ publishForm.elements.type.addEventListener('change', publishTypeFields);
 publishDrawer.addEventListener('close', () => {document.body.style.overflow = publishPreviousOverflow;});
 document.getElementById('publishClose').onclick = () => publishDrawer.close();
 
-publishForm.addEventListener('submit', event => {
+let publishSaving = false, publishRequestId = null;
+publishForm.addEventListener('input', () => { if(!publishSaving)publishRequestId=null; });
+publishForm.addEventListener('submit', async event => {
  event.preventDefault();
+ if(publishSaving)return;
  const error = document.getElementById('publishError');
  const value = name => publishForm.elements[name].value.trim();
  const paid = publishForm.elements.type.value === 'paid';
@@ -2210,6 +2223,20 @@ publishForm.addEventListener('submit', event => {
   applied: false,
   publishedByMe: true
  };
+ publishSaving = true; publishForm.inert = true;
+ const publishButton = document.getElementById('publishSubmit'); publishButton.disabled = true; publishButton.textContent = '正在发布…';
+ try {
+  await requireCommunityPublisher();
+  publishRequestId ||= crypto.randomUUID();
+  const {images, publishedByMe, applied, id, ...payload} = job;
+  const row = await CoveCommunity.publish('job', payload, images, publishRequestId);
+  Object.assign(job, {id:row.id, _cloud:row, images:row.media.map(name=>({src:CoveCommunity.mediaUrl(name),name:''}))});
+  publishRequestId = null;
+ } catch(failure) {
+  error.textContent = failure.message || '发布失败，请检查网络后重试。'; return;
+ } finally {
+  publishSaving = false; publishForm.inert = false; publishButton.disabled = false; publishButton.textContent = '发布 ↗';
+ }
  const preview = document.getElementById('publishPreview');
  preview.replaceChildren();
  const card = document.createElement('article');
@@ -2382,8 +2409,17 @@ function renderProfileWorks() {
    remove.className = 'profile-work-remove';
    remove.textContent = '×';
    remove.setAttribute('aria-label', '删除作品 ' + work.title);
-   remove.onclick = () => {
-    target.works.splice(index, 1);
+   remove.onclick = async () => {
+    remove.disabled = true;
+    if(work._cloud) {
+     try {await CoveCommunity.remove(work._cloud);}
+     catch(error){showToast(error.message);remove.disabled=false;return;}
+     const at=inspirationWorks.findIndex(item=>item._cloud?.id===work._cloud.id);
+     if(at>=0)inspirationWorks.splice(at,1);
+     renderInspirationWorks(currentInspirationFilter);
+    }
+    const currentIndex=target.works.indexOf(work);
+    if(currentIndex>=0)target.works.splice(currentIndex, 1);
     renderProfileWorks();
     updateProfileCounts();
     showToast('已删除「' + work.title + '」');
@@ -2490,6 +2526,7 @@ let uploadPreviousOverflow = '';
 function drawUploadImages() {
  renderImagePreview(uploadPreview, uploadImages, index => {
   uploadImages.splice(index, 1);
+  uploadRequestId=null;
   drawUploadImages();
  });
  uploadPreview.querySelectorAll('.upload-thumb').forEach((cell, index) => {
@@ -2498,14 +2535,15 @@ function drawUploadImages() {
   cover.textContent = index === 0 ? '封面' : '设为封面';
   cover.setAttribute('aria-label', index === 0 ? '当前封面' : '将第 '+(index+1)+' 张设为封面');
   cover.setAttribute('aria-pressed', String(index === 0));
-  cover.onclick = () => { uploadImages.unshift(uploadImages.splice(index, 1)[0]); drawUploadImages(); };
+  cover.onclick = () => { uploadRequestId=null; uploadImages.unshift(uploadImages.splice(index, 1)[0]); drawUploadImages(); };
   cell.append(cover);
  });
  document.getElementById('uploadCount').textContent = `已选 ${uploadImages.length} / 9 张`;
 }
 
 async function addWorkImages(files) {
- if (uploadReading) return;
+ if (uploadReading || uploadSaving) return;
+ uploadRequestId=null;
  uploadReading = true;
  const submit = document.getElementById('uploadSubmit');
  submit.disabled = true; submit.textContent = '正在读取图片…';
@@ -2519,7 +2557,7 @@ async function addWorkImages(files) {
   }
   drawUploadImages(); error.textContent = problems.join('；');
  } finally {
-  uploadReading = false; submit.disabled = false; submit.textContent = '预览发布 ↗'; uploadInput.value = '';
+  uploadReading = false; submit.disabled = false; submit.textContent = '发布 ↗'; uploadInput.value = '';
  }
 }
 
@@ -2551,9 +2589,11 @@ document.getElementById('profileUploadButton').onclick = openUpload;
 document.getElementById('uploadClose').onclick = () => uploadDrawer.close();
 uploadDrawer.addEventListener('close', () => {document.body.style.overflow = uploadPreviousOverflow;});
 
-uploadForm.addEventListener('submit', event => {
+let uploadSaving = false, uploadRequestId = null;
+uploadForm.addEventListener('input', () => {if(!uploadSaving)uploadRequestId=null;});
+uploadForm.addEventListener('submit', async event => {
  event.preventDefault();
- if (uploadReading) return;
+ if (uploadReading || uploadSaving) return;
  const error = document.getElementById('uploadError');
  if (!uploadImages.length) {
   error.textContent = '请至少选择一张图片。';
@@ -2569,6 +2609,23 @@ uploadForm.addEventListener('submit', event => {
   tags: [...new Set(value('tags').split(/[\s,，、#]+/).filter(Boolean))].slice(0, 6),
   role: value('role'), location: value('location'), credits: value('credits')
  };
+ uploadSaving = true; uploadForm.inert = true;
+ const uploadButton = document.getElementById('uploadSubmit'); uploadButton.disabled = true; uploadButton.textContent = '正在发布…';
+ try {
+  await requireCommunityPublisher();
+  uploadRequestId ||= crypto.randomUUID();
+  const {image, images, ...payload} = work;
+  payload.creator = profileData.name;
+  const row = await CoveCommunity.publish('work', payload, images, uploadRequestId);
+  Object.assign(work, cloudWork(row));
+  inspirationWorks.unshift({...work, tags:[...work.tags,'latest'], creator:payload.creator, avatar:work.image, likes:0, saved:false});
+  renderInspirationWorks(currentInspirationFilter);
+  uploadRequestId = null;
+ } catch(failure) {
+  error.textContent = failure.message || '发布失败，请检查网络后重试。'; return;
+ } finally {
+  uploadSaving = false; uploadForm.inert = false; uploadButton.disabled = false; uploadButton.textContent = '发布 ↗';
+ }
  profileData.works.unshift(work);
  const preview = document.getElementById('uploadPublishedPreview'); preview.replaceChildren();
  const img = document.createElement('img'); img.src = work.image; img.alt = work.title;
@@ -2796,6 +2853,7 @@ function renderWorkComments(detail) {
 function openWorkDetail(index) {
  const work = inspirationWorks[index];
  if (!work) return;
+ if(work._cloud){openPortfolioWork(work);return;}
  workIndex = index;
  const detail = ensureWorkDetail(work, index);
  workImage.src = work.image;
@@ -2967,3 +3025,83 @@ if (reportBack) {
   window.scrollTo(0, 0);
  });
 }
+
+/* Cloud-backed community content. Public rows never decide ownership on the client. */
+function cloudText(value, limit=1000) { return typeof value==='string'?value.slice(0,limit):''; }
+function cloudWork(row) {
+ const p=row.payload||{}, images=(row.media||[]).map(name=>CoveCommunity.mediaUrl(name)).filter(Boolean);
+ return {title:cloudText(p.title,60),description:cloudText(p.description),category:cloudText(p.category,40),role:cloudText(p.role,40),location:cloudText(p.location,60),credits:cloudText(p.credits,400),tags:Array.isArray(p.tags)?p.tags.slice(0,6).map(t=>cloudText(t,40)):[],images,image:images[0]||'',creator:cloudText(p.creator,60)||'COVE Member',_cloud:row};
+}
+function cloudJob(row) {
+ const p=row.payload||{}, job={id:Number(row.id),seed:Number(row.id),type:p.type==='tfp'?'tfp':'paid',amount:Number(p.amount)||0,applied:false,publishedByMe:row.user_id===CoveCommunity.user()?.id,_cloud:row};
+ for(const key of ['title','company','logo','role','city','kind','format','date','time','pay','description','host','fair'])job[key]=cloudText(p[key]);
+ job.needs=Array.isArray(p.needs)?p.needs.slice(0,20).map(v=>cloudText(v)):[];
+ job.images=(row.media||[]).map(name=>({src:CoveCommunity.mediaUrl(name),name:''})).filter(image=>image.src);
+ return escapeJobText(job);
+}
+let communityLoadVersion=0;
+async function refreshCommunity() {
+ const version=++communityLoadVersion;
+ await CoveCommunity.setup();
+ if(CoveCommunity.user())await CoveCommunity.requireSession();
+ const [works,jobs]=await Promise.all([CoveCommunity.list('work'),CoveCommunity.list('job')]);
+ if(version!==communityLoadVersion)return;
+ const user=CoveCommunity.user();
+ const own=works.filter(row=>row.user_id===user?.id).map(cloudWork);
+ profileData.works.splice(0,profileData.works.length,...own);
+ for(let i=inspirationWorks.length-1;i>=0;i--)if(inspirationWorks[i]._cloud)inspirationWorks.splice(i,1);
+ inspirationWorks.unshift(...works.map(row=>{const work=cloudWork(row);return {...work,tags:[...work.tags,'latest'],avatar:work.image,likes:0,saved:false};}));
+ for(let i=jobData.length-1;i>=0;i--)if(jobData[i]._cloud)jobData.splice(i,1);
+ jobData.unshift(...jobs.map(cloudJob));
+ renderInspirationWorks(currentInspirationFilter);renderJobs();renderProfileWorks();renderProfilePublished();updateProfileCounts();renderCommunityAccount();
+}
+function renderCommunityAccount() {
+ const user=CoveCommunity.user();
+ document.getElementById('communityAccountStatus').textContent=user?'已登录 · '+user.email:'登录后可管理已发布内容';
+ document.getElementById('communitySignIn').hidden=Boolean(user);
+ document.getElementById('communitySignOut').hidden=!user;
+}
+const communityLogin=document.getElementById('communityLogin');
+let communityLoginOverflow='';
+function openCommunityLogin() {
+ if(communityLogin.open)return;
+ communityLoginOverflow=document.body.style.overflow;document.body.style.overflow='hidden';
+ document.getElementById('communityLoginMessage').textContent='';communityLogin.showModal();
+}
+async function requireCommunityPublisher() {
+ await CoveCommunity.setup();
+ try {await CoveCommunity.requireSession();}
+ catch(error){openCommunityLogin();throw new Error('请先完成邮箱登录，再点击发布。');}
+}
+document.getElementById('communitySignIn').onclick=openCommunityLogin;
+document.getElementById('communityLoginClose').onclick=()=>communityLogin.close();
+communityLogin.addEventListener('close',()=>{document.body.style.overflow=communityLoginOverflow;});
+document.getElementById('communitySignOut').onclick=async()=>{
+ try{
+  await CoveCommunity.signOut();renderCommunityAccount();
+  profileData.works=[];jobData.forEach(job=>{if(job._cloud)job.publishedByMe=false;});
+  renderProfileWorks();renderProfilePublished();renderJobs();
+ }catch(error){showToast(error.message);}
+};
+document.getElementById('communityEmailForm').onsubmit=async event=>{
+ event.preventDefault();const button=document.getElementById('communitySendCode');button.disabled=true;
+ const message=document.getElementById('communityLoginMessage');
+ try{
+  await CoveCommunity.sendCode(document.getElementById('communityEmail').value.trim());
+  document.getElementById('communityEmailForm').hidden=true;document.getElementById('communityCodeForm').hidden=false;
+  message.textContent='验证码已发送，请检查邮箱。';document.getElementById('communityCode').focus();
+ }catch(error){message.textContent=error.message;}finally{button.disabled=false;}
+};
+document.getElementById('communityCodeForm').onsubmit=async event=>{
+ event.preventDefault();const button=document.getElementById('communityVerify');button.disabled=true;
+ try{
+  await CoveCommunity.verifyCode(document.getElementById('communityEmail').value.trim(),document.getElementById('communityCode').value.trim());
+  renderCommunityAccount();communityLogin.close();
+  await refreshCommunity();showToast('登录成功，可以继续发布。');
+ }catch(error){document.getElementById('communityLoginMessage').textContent=error.message;showToast(error.message);}finally{button.disabled=false;}
+};
+document.getElementById('communityChangeEmail').onclick=()=>{
+ document.getElementById('communityEmailForm').hidden=false;document.getElementById('communityCodeForm').hidden=true;document.getElementById('communityCode').value='';
+};
+renderCommunityAccount();
+refreshCommunity().catch(()=>{/* Existing discovery content remains available while cloud service is unreachable. */});

@@ -469,6 +469,9 @@
                     </div>
 
                     <button class="profile-enter" id="profileEnter" type="button">查看完整主页 ↗</button>
+                    <p id="communityAccountStatus" class="community-account-status" aria-live="polite">登录后可管理已发布内容</p>
+                    <button class="profile-enter" id="communitySignIn" type="button">邮箱登录</button>
+                    <button class="community-signout" id="communitySignOut" type="button" hidden>退出登录</button>
 
 
                 </div>
@@ -758,8 +761,8 @@
 <label class="apply-label">作品使用约定 *<textarea name="fair" required rows="2" maxlength="300" placeholder="例如：成片双方均可用于作品集，商用需另行沟通。"></textarea></label>
 <div class="apply-agreement"><span>✳</span><p>清晰的报酬与作品使用约定，是 COVE 对每一次合作的基本要求。</p></div>
 <label class="apply-consent"><input name="consent" type="checkbox" required><span>我已确认以上合作条件真实有效，并愿意按此与创作者沟通。</span></label></section><p id="publishError" role="alert"></p></form>
-<section id="publishSuccess" hidden class="apply-success"><div>✓</div><h3>项目预览已生成。</h3><p>已完成发布流程预览。内容仅保存在当前浏览器，未发送到服务器，刷新后不保留。</p><div id="publishPreview" class="publish-preview"></div><button id="publishEdit">返回编辑</button></section></div>
-<footer class="apply-footer"><div><strong>让项目，找到对的人。</strong><small>交互预览 · 不会真实发布</small></div><button type="submit" form="publishForm" id="publishSubmit">预览发布 ↗</button></footer></dialog>
+<section id="publishSuccess" hidden class="apply-success"><div>✓</div><h3>合作机会已发布。</h3><p>已保存，可在职位页和个人主页查看。</p><div id="publishPreview" class="publish-preview"></div><button id="publishEdit">再发布一个项目</button></section></div>
+<footer class="apply-footer"><div><strong>让项目，找到对的人。</strong><small>让更多创作者看到你的项目</small></div><button type="submit" form="publishForm" id="publishSubmit">发布 ↗</button></footer></dialog>
 
 <dialog id="uploadDrawer" class="apply-drawer" aria-labelledby="uploadHeading">
 <div class="apply-top"><span>COVE / SHARE YOUR WORK</span><button id="uploadClose" aria-label="关闭作品发布面板">×</button></div>
@@ -780,8 +783,8 @@
 <div class="apply-agreement"><span>✳</span><p>尊重原创，也尊重每一位共同创作者。请确认图片使用权，并为合作伙伴保留署名。</p></div>
 <label class="apply-consent"><input name="consent" type="checkbox" required><span>我确认有权展示这些图片，且作品信息与署名真实准确。</span></label></section>
 <p id="uploadError" role="alert"></p></form>
-<section id="uploadSuccess" hidden class="apply-success"><div>✓</div><h3>作品预览已发布。</h3><p>已添加到你的主页。内容仅保留在当前页面，刷新后不保留。</p><article id="uploadPublishedPreview" class="work-published-preview"></article><div class="work-success-actions"><button id="uploadViewProfile" type="button">查看我的主页 ↗</button><button id="uploadAgain" type="button">再发布一件</button></div></section></div>
-<footer class="apply-footer"><div><strong>作品，是最好的简历。</strong><small>本地预览 · 不会真实上传或公开发布</small></div><button type="submit" form="uploadForm" id="uploadSubmit">预览发布 ↗</button></footer></dialog>
+<section id="uploadSuccess" hidden class="apply-success"><div>✓</div><h3>作品已发布。</h3><p>已保存到你的主页，也会展示在灵感页。</p><article id="uploadPublishedPreview" class="work-published-preview"></article><div class="work-success-actions"><button id="uploadViewProfile" type="button">查看我的主页 ↗</button><button id="uploadAgain" type="button">再发布一件</button></div></section></div>
+<footer class="apply-footer"><div><strong>作品，是最好的简历。</strong><small>分享作品，记录每一次创作</small></div><button type="submit" form="uploadForm" id="uploadSubmit">发布 ↗</button></footer></dialog>
 
 <dialog id="portfolioViewer" class="apply-drawer" aria-labelledby="portfolioViewerTitle">
 <div class="apply-top"><span>COVE / PORTFOLIO</span><button id="portfolioViewerClose" aria-label="关闭作品详情">×</button></div>
@@ -802,6 +805,13 @@
 <footer class="apply-footer"><div><strong>让人记住你。</strong><small>本地预览 · 不会上传服务器</small></div><button type="submit" form="profileEditForm" id="profileEditSubmit">保存资料 ↗</button></footer></dialog>
 
     <script src="config.js?v=report-6"></script>
+    <dialog id="communityLogin" class="apply-drawer" aria-labelledby="communityLoginTitle">
+    <div class="apply-top"><span>COVE / YOUR ACCOUNT</span><button id="communityLoginClose" aria-label="关闭登录">×</button></div>
+    <div class="apply-scroll"><p class="apply-kicker">KEEP YOUR CREATIVE WORK</p><h2 id="communityLoginTitle">让创作，留下来。</h2><p class="apply-subtitle">用邮箱登录，保存并管理你的作品与合作机会。</p>
+    <form id="communityEmailForm"><label class="apply-label">邮箱<input id="communityEmail" type="email" required autocomplete="email" placeholder="you@example.com"></label><button class="community-primary" id="communitySendCode" type="submit">获取验证码</button></form>
+    <form id="communityCodeForm" hidden><label class="apply-label">邮箱验证码<input id="communityCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" maxlength="10" required placeholder="输入邮件中的验证码"></label><button class="community-primary" id="communityVerify" type="submit">登录</button><button id="communityChangeEmail" type="button">更换邮箱 / 重新获取</button></form>
+    <p id="communityLoginMessage" role="status" aria-live="polite"></p></div></dialog>
+    <script src="community.js?v=1"></script>
     <script src="industry-report.js?v=1"></script>
     <script src="script.js?v=report-8"></script>
 

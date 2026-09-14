@@ -2444,3 +2444,10 @@ input:focus-visible {
 #uploadSubmit {background:#c8b6ec;color:#21182d;padding:13px 22px;border-radius:5px;font-size:12px;white-space:nowrap;}
 #uploadSubmit:disabled {opacity:.45;cursor:wait;}
 #uploadSubmit:focus-visible,.work-cover-button:focus-visible {outline:2px solid #eee4f7;outline-offset:3px;}
+.community-account-status {font-size:12px;line-height:1.8;color:#a99ab7;margin:22px 0 14px;overflow-wrap:anywhere;}
+.community-signout {background:transparent;color:#c8b6ec;font-size:12px;margin-top:10px;}
+.community-primary,#publishSubmit {background:#c8b6ec;color:#21182d;padding:13px 22px;border-radius:5px;font-size:12px;}
+.community-primary:disabled,#publishSubmit:disabled {opacity:.5;cursor:wait;}
+#communityLoginTitle {font-size:30px;font-weight:400;margin:14px 0;}
+#communityLoginMessage {color:#c5b4d2;font-size:12px;line-height:1.8;margin-top:20px;}
+#communityChangeEmail {display:block;margin-top:20px;background:transparent;color:#c8b6ec;font-size:12px;}

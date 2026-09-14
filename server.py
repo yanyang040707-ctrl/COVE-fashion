@@ -390,6 +390,9 @@ def application(environ, start_response):
     try:
         path = environ.get("PATH_INFO", "/")
         method = environ.get("REQUEST_METHOD", "GET")
+        if path == '/api/community' and method == 'GET':
+            from api.community import public_config
+            return respond(200, public_config())
         if path.startswith("/api/"):
             if path not in ("/api/insights/search", "/api/insights/report"):
                 raise APIError(404, "NOT_FOUND", "接口不存在。")
