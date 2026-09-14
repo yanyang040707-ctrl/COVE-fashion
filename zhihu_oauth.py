@@ -36,7 +36,7 @@ import hmac
 import json
 import os
 import time
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit, urlunsplit, parse_qsl, unquote
 from urllib.request import Request, build_opener
 from urllib.error import HTTPError, URLError
 
@@ -54,10 +54,44 @@ REDIRECT_URI = os.environ.get(
 ).strip()
 
 # Where to send the browser once login finishes. The site lives on Pages.
+DEFAULT_FRONTEND_URL = "https://yanyang040707-ctrl.github.io/COVE-fashion/"
 FRONTEND_URL = os.environ.get(
     "COVE_FRONTEND_URL",
-    "https://franchign.github.io/COVE-fashion-platform/",
-).strip()
+    DEFAULT_FRONTEND_URL,
+).strip() or DEFAULT_FRONTEND_URL
+
+
+def safe_return_url(value):
+    """Only return to this site's deployment, including its Pages subpath."""
+    if not value or any(ord(char) < 32 for char in value) or "\\" in value:
+        return FRONTEND_URL
+    try:
+        target = urlsplit(value)
+        path = unquote(target.path)
+        if target.username or target.password or "\\" in path or any(
+            part in (".", "..") for part in path.split("/")
+        ):
+            return FRONTEND_URL
+        for root in (DEFAULT_FRONTEND_URL, FRONTEND_URL):
+            base = urlsplit(root)
+            prefix = base.path.rstrip("/") + "/"
+            if (target.scheme in ("https", "http")
+                    and (target.scheme, target.netloc) == (base.scheme, base.netloc)
+                    and target.path.startswith(prefix)):
+                return value
+    except ValueError:
+        pass
+    return FRONTEND_URL
+
+
+def login_result_url(return_to, result, reason=None):
+    target = urlsplit(safe_return_url(return_to))
+    query = [(key, value) for key, value in parse_qsl(target.query, keep_blank_values=True)
+             if key not in ("login", "reason")]
+    query.append(("login", result))
+    if reason:
+        query.append(("reason", reason))
+    return urlunsplit(target._replace(query=urlencode(query)))
 
 AUTHORIZE_URL = "https://openapi.zhihu.com/authorize"
 TOKEN_URL = "https://openapi.zhihu.com/access_token"

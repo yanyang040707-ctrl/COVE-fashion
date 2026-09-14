@@ -2960,8 +2960,11 @@ async function refreshZhihuStatus() {
 }
 
 zhihuLoginButton.addEventListener('click', () => {
+ const returnTo = new URL(window.location.href);
+ returnTo.searchParams.delete('login');
+ returnTo.searchParams.delete('reason');
  closeProfile();
- window.location.href = zhihuApi('/api/auth/login');
+ window.location.href = zhihuApi('/api/auth/login') + '?return_to=' + encodeURIComponent(returnTo.href);
 });
 
 zhihuUserButton.addEventListener('click', () => {
@@ -3149,7 +3152,7 @@ document.getElementById('zhihuSignOut').addEventListener('click', () => {
   params.delete('login');
   params.delete('reason');
   const query = params.toString();
-  window.history.replaceState({}, '', window.location.pathname + (query ? '?' + query : ''));
+  window.history.replaceState({}, '', window.location.pathname + (query ? '?' + query : '') + window.location.hash);
  }
  refreshZhihuStatus();
 })();

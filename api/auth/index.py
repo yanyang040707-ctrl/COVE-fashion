@@ -9,6 +9,7 @@ import json
 import os
 import secrets
 import sys
+import time
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
@@ -98,7 +99,7 @@ class handler(BaseHTTPRequestHandler):
         # /login and /callback are full-page browser navigations, not XHR, so
         # they redirect instead of returning JSON and skip the origin check.
         if route.endswith("/auth/login"):
-            self._handle_login()
+            self._handle_login(query)
             return
         if route.endswith("/auth/callback"):
             self._handle_callback(query)
@@ -124,11 +125,15 @@ class handler(BaseHTTPRequestHandler):
 
     # --- handlers ---------------------------------------------------------
 
-    def _handle_login(self):
+    def _handle_login(self, query):
         # state guards the callback against cross-site request forgery; it is
         # kept in the session cookie so any instance can verify it.
         state = secrets.token_urlsafe(24)
-        session = {"state": state}
+        session = {
+            "state": state,
+            "exp": time.time() + 600,
+            "return_to": oauth.safe_return_url((query.get("return_to") or [None])[0]),
+        }
         try:
             url = oauth.build_authorize_url(state)
         except oauth.AuthError as exc:
@@ -142,7 +147,7 @@ class handler(BaseHTTPRequestHandler):
         session = self._session() or {}
 
         def fail(reason):
-            self._send(302, None, location=oauth.FRONTEND_URL + "?login=error&reason=" + reason)
+            self._send(302, None, location=oauth.login_result_url(session.get("return_to"), "error", reason))
 
         if not code:
             fail("missing_code")
@@ -165,7 +170,8 @@ class handler(BaseHTTPRequestHandler):
             "stateVerified": bool(returned_state),
         }
         cookie = oauth.cookie_header(oauth.seal(payload), min(expires_in, oauth.SESSION_MAX_AGE))
-        self._send(302, None, cookie=cookie, location=oauth.FRONTEND_URL + "?login=success")
+        self._send(302, None, cookie=cookie,
+                   location=oauth.login_result_url(session.get("return_to"), "success"))
 
     def _handle_status(self, origin):
         session = self._session()
