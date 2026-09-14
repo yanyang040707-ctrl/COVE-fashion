@@ -450,8 +450,8 @@ function renderShootingReport(data) {
   let lines=['# '+report.title,report.summary,...block('策划假设',report.assumptions)];
   if(kind==='shooting')lines=lines.concat(block('选址',report.locations.map(l=>`${l.name}\n${l.reason}\n时间：${l.timing}\n核实：${l.verify}\n${refs(l)}`)),block('造型',report.styling),block('分镜',report.shots.map((s,i)=>`${i+1}. ${s.title} · ${s.location}\n机位：${s.framing}\n动作：${s.pose}\n用光：${s.light}\n焦段：${s.lens}\n${refs(s)}`)),block('行程',report.schedule),block('准备清单',report.checklist));
   if(kind==='palette')lines=lines.concat(block('核心色彩',report.colors.map(c=>`${c.name} ${c.hex}\n调性：${c.mood}\n应用：${c.usage}\n${refs(c)}`)),block('配色组合',report.combinations.map(c=>`${c.name}：${c.hexes.join(' + ')}\n${c.scene}\n${refs(c)}`)),block('材质呼应',report.materials),block('落地应用',report.applications),block('风险提示',report.cautions));
-  if(kind==='trend')lines=lines.concat(block('趋势信号',report.signals.map(s=>`${s.name}（确定性 ${s.confidence}）\n${s.detail}\n${refs(s)}`)),block('驱动因素',report.drivers),block('关键单品与元素',report.keyitems),block('落地建议',report.actions),block('风险提示',report.cautions));
-  if(kind==='general')lines=lines.concat(block('分析要点',report.points.map(p=>`${p.name}\n${p.detail}\n${refs(p)}`)),block('建议',report.actions),block('风险提示',report.cautions));
+  if(kind==='trend')lines=lines.concat(block('趋势信号',report.signals.map(s=>`${s.name}（确定性 ${s.confidence}）\n${s.detail}\n${refs(s)}`)),block('视觉参考方向',report.visual_refs?report.visual_refs.map(v=>`${v.name}\n氛围：${v.mood}\n标签：${(v.tags||[]).join(' · ')}\n灵感搜索：${v.search}`):['（无）']),block('驱动因素',report.drivers),block('关键单品与元素',report.keyitems),block('落地建议',report.actions),block('风险提示',report.cautions));
+  if(kind==='general')lines=lines.concat(block('分析要点',report.points.map(p=>`${p.name}\n${p.detail}\n${refs(p)}`)),block('视觉参考方向',report.visual_refs?report.visual_refs.map(v=>`${v.name}\n氛围：${v.mood}\n标签：${(v.tags||[]).join(' · ')}\n灵感搜索：${v.search}`):['（无）']),block('建议',report.actions),block('风险提示',report.cautions));
   lines=lines.concat(['\n## 来源说明',report.source_note],data.warning?[data.warning]:[],data.items.map((s,i)=>`[${i+1}] ${s.title}\n${s.url}`));
   const url=URL.createObjectURL(new Blob([lines.join('\n\n')],{type:'text/markdown;charset=utf-8'}));const a=el('a');a.href=url;a.download=meta.file;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  };header.append(download);root.append(header);
@@ -484,11 +484,55 @@ function renderShootingReport(data) {
   const signals=section(no()+'趋势信号');report.signals.forEach((item,i)=>{const card=el('article',null,'shoot-signal');
    const head=el('div',null,'shoot-signal-head');head.append(el('span',String(i+1).padStart(2,'0'),'shoot-label'),el('span','确定性 '+item.confidence,'shoot-confidence shoot-confidence-'+({'高':'high','中':'mid','低':'low'}[item.confidence]||'mid')));
    card.append(head,el('h4',item.name),el('p',item.detail),el('small',refs(item)));signals.append(card);});
+  if(report.visual_refs&&report.visual_refs.length){
+   const vrSec=section(no()+'视觉参考方向');const vrGrid=el('div',null,'shoot-vr-grid');
+   report.visual_refs.forEach(vr=>{
+    const card=el('article',null,'shoot-vr-card');
+    const swatch=el('div',null,'shoot-vr-swatch');
+    const pal=Array.isArray(vr.palette)&&vr.palette.length?vr.palette:['#3a3242','#7a6a8a'];
+    pal.forEach(hex=>{const cell=el('span');cell.style.background=hex;cell.title=hex;swatch.append(cell);});
+    const copy=el('div',null,'shoot-vr-copy');
+    copy.append(el('h4',vr.name));
+    const mood=el('p',null,'shoot-vr-mood');mood.textContent=vr.mood||'';copy.append(mood);
+    if(Array.isArray(vr.tags)&&vr.tags.length){
+     const tags=el('div',null,'shoot-vr-tags');
+     vr.tags.forEach(t=>{const chip=el('span',t,'shoot-vr-tag');tags.append(chip);});copy.append(tags);
+    }
+    if(vr.search){
+     const searchBtn=el('button','在灵感板搜索 ↗','shoot-vr-search');searchBtn.type='button';
+     searchBtn.addEventListener('click',()=>{switchPage('inspiration');if(typeof setInspirationFilter==='function')setInspirationFilter('all');if(searchInput)searchInput.value='';});
+     copy.append(searchBtn);
+    }
+    card.append(swatch,copy);vrGrid.append(card);});
+   vrSec.append(vrGrid);
+  }
   list(no()+'驱动因素',report.drivers);list(no()+'关键单品与元素',report.keyitems);list(no()+'落地建议',report.actions);list(no()+'风险提示',report.cautions);
  }
  if(kind==='general'){
   const points=section(no()+'分析要点');report.points.forEach((item,i)=>{const card=el('article',null,'shoot-point');
    card.append(el('span',String(i+1).padStart(2,'0'),'shoot-label'),el('h4',item.name),el('p',item.detail),el('small',refs(item)));points.append(card);});
+  if(report.visual_refs&&report.visual_refs.length){
+   const vrSec=section(no()+'视觉参考方向');const vrGrid=el('div',null,'shoot-vr-grid');
+   report.visual_refs.forEach(vr=>{
+    const card=el('article',null,'shoot-vr-card');
+    const swatch=el('div',null,'shoot-vr-swatch');
+    const pal=Array.isArray(vr.palette)&&vr.palette.length?vr.palette:['#3a3242','#7a6a8a'];
+    pal.forEach(hex=>{const cell=el('span');cell.style.background=hex;cell.title=hex;swatch.append(cell);});
+    const copy=el('div',null,'shoot-vr-copy');
+    copy.append(el('h4',vr.name));
+    const mood=el('p',null,'shoot-vr-mood');mood.textContent=vr.mood||'';copy.append(mood);
+    if(Array.isArray(vr.tags)&&vr.tags.length){
+     const tags=el('div',null,'shoot-vr-tags');
+     vr.tags.forEach(t=>{const chip=el('span',t,'shoot-vr-tag');tags.append(chip);});copy.append(tags);
+    }
+    if(vr.search){
+     const searchBtn=el('button','在灵感板搜索 ↗','shoot-vr-search');searchBtn.type='button';
+     searchBtn.addEventListener('click',()=>{switchPage('inspiration');if(typeof setInspirationFilter==='function')setInspirationFilter('all');});
+     copy.append(searchBtn);
+    }
+    card.append(swatch,copy);vrGrid.append(card);});
+   vrSec.append(vrGrid);
+  }
   list(no()+'建议',report.actions);list(no()+'风险提示',report.cautions);
  }
  const sourceSection=section(no()+'知乎参考与创作说明');sourceSection.append(el('p',report.source_note,'shoot-muted'));data.items.forEach((item,i)=>{const card=el('article',null,'shoot-source'),a=el('a',`[${i+1}] ${item.title}`);a.href=item.url;a.target='_blank';a.rel='noopener noreferrer';card.append(a,el('small',item.author+' · 知乎'),el('p',item.summary));sourceSection.append(card);});
