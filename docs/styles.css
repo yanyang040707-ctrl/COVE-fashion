@@ -2384,322 +2384,159 @@ input:focus-visible {
 
 /* =========================================
    ZHIHU ACCOUNT
+   Lives at the bottom of the 主页 panel. Colours mirror .profile-enter so the
+   entry reads as part of the same panel rather than a bolted-on widget.
 ========================================= */
 
-.zhihu-login-button,
-.zhihu-user-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 14px;
-    margin-right: 10px;
-    border: 1px solid rgba(58, 50, 66, 0.18);
-    border-radius: 999px;
-    background: #fff;
-    color: #3a3242;
-    font-size: 13px;
-    cursor: pointer;
-    transition: border-color 0.2s ease, background 0.2s ease;
+.zhihu-slot {
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid #2a2430;
 }
 
-.zhihu-login-button:hover,
-.zhihu-user-button:hover {
-    border-color: rgba(58, 50, 66, 0.4);
-    background: #faf8fc;
+.zhihu-login-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #766181;
+    border-radius: 6px;
+    background: none;
+    color: #dec5f5;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.zhihu-login-button:hover {
+    background: #1b1620;
 }
 
 .zhihu-login-mark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 5px;
+    display: inline-grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
     background: #0084ff;
     color: #fff;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
 }
 
-.zhihu-user-avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    object-fit: cover;
-    background: #eee;
-}
-
-.zhihu-user-name {
-    max-width: 96px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* ---------- user page ---------- */
-
-.zhihu-page {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 32px 24px 80px;
-}
-
-.zhihu-back {
-    border: none;
-    background: none;
-    color: #7a6a8a;
-    font-size: 14px;
-    cursor: pointer;
-    padding: 4px 0;
-    margin-bottom: 20px;
-}
-
-.zhihu-hero {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 28px;
-    border: 1px solid rgba(58, 50, 66, 0.12);
-    border-radius: 18px;
-    background: #fff;
-}
-
-.zhihu-hero-avatar {
-    width: 76px;
-    height: 76px;
-    border-radius: 50%;
-    object-fit: cover;
-    background: #eee;
-    flex-shrink: 0;
-}
-
-.zhihu-hero-copy {
-    flex: 1;
-    min-width: 0;
-}
-
-.zhihu-hero-copy h1 {
-    margin: 0 0 6px;
-    font-size: 22px;
-    color: #2b2433;
-}
-
-.zhihu-hero-headline {
-    margin: 0 0 8px;
-    color: #7a6a8a;
-    font-size: 14px;
-    line-height: 1.5;
-}
-
-.zhihu-hero-link {
-    font-size: 13px;
-    color: #0084ff;
-    text-decoration: none;
-}
-
-.zhihu-logout {
-    align-self: flex-start;
-    padding: 6px 14px;
-    border: 1px solid rgba(58, 50, 66, 0.18);
-    border-radius: 999px;
-    background: none;
-    color: #7a6a8a;
-    font-size: 13px;
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
-.zhihu-logout:hover {
-    border-color: rgba(200, 80, 80, 0.5);
-    color: #c85050;
-}
-
-.zhihu-tabs {
-    display: flex;
-    gap: 8px;
-    margin: 28px 0 20px;
-    border-bottom: 1px solid rgba(58, 50, 66, 0.1);
-}
-
-.zhihu-tab {
-    padding: 10px 18px;
-    border: none;
-    border-bottom: 2px solid transparent;
-    background: none;
-    color: #7a6a8a;
-    font-size: 15px;
-    cursor: pointer;
-    margin-bottom: -1px;
-}
-
-.zhihu-tab.active {
-    color: #3a3242;
-    border-bottom-color: #3a3242;
-    font-weight: 600;
-}
-
-.zhihu-panel[hidden] {
+.zhihu-account[hidden] {
     display: none;
 }
 
-.zhihu-list {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.zhihu-item {
-    padding: 18px 20px;
-    border: 1px solid rgba(58, 50, 66, 0.1);
-    border-radius: 14px;
-    background: #fff;
-}
-
-.zhihu-item-head {
+.zhihu-user-button {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 8px;
-}
-
-.zhihu-item-type {
-    padding: 2px 9px;
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #4a3f52;
     border-radius: 6px;
-    background: rgba(0, 132, 255, 0.1);
-    color: #0084ff;
+    background: none;
+    color: #e7dcf0;
     font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
-.zhihu-item-time {
-    color: #a397ad;
-    font-size: 12px;
+.zhihu-user-button:hover {
+    background: #1b1620;
 }
 
-.zhihu-item-title {
-    display: block;
-    margin-bottom: 6px;
-    color: #2b2433;
-    font-size: 16px;
-    font-weight: 600;
-    text-decoration: none;
-    line-height: 1.45;
-}
-
-.zhihu-item-title:hover {
-    color: #0084ff;
-}
-
-.zhihu-item-summary {
-    margin: 0 0 10px;
-    color: #6f6379;
-    font-size: 14px;
-    line-height: 1.6;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.zhihu-item-stats {
-    display: flex;
-    gap: 16px;
-    color: #a397ad;
-    font-size: 12px;
-}
-
-.zhihu-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 14px;
-}
-
-.zhihu-person {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px;
-    border: 1px solid rgba(58, 50, 66, 0.1);
-    border-radius: 14px;
-    background: #fff;
-}
-
-.zhihu-person-avatar {
-    width: 48px;
-    height: 48px;
+.zhihu-user-avatar {
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     object-fit: cover;
-    background: #eee;
+    background: #16131b;
     flex-shrink: 0;
 }
 
-.zhihu-person-copy {
+.zhihu-user-name {
+    flex: 1;
     min-width: 0;
-}
-
-.zhihu-person-name {
-    display: block;
-    color: #2b2433;
-    font-size: 15px;
-    font-weight: 600;
-    text-decoration: none;
-    margin-bottom: 3px;
-}
-
-.zhihu-person-name:hover {
-    color: #0084ff;
-}
-
-.zhihu-person-headline {
-    margin: 0 0 4px;
-    color: #7a6a8a;
-    font-size: 13px;
-    line-height: 1.45;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.zhihu-person-count {
-    color: #a397ad;
-    font-size: 12px;
+.zhihu-user-go {
+    color: #8d8296;
+    flex-shrink: 0;
 }
 
-.zhihu-empty {
-    padding: 48px 0;
-    text-align: center;
-    color: #a397ad;
-    font-size: 14px;
-}
-
-.zhihu-more {
-    display: block;
+.zhihu-signout {
     width: 100%;
-    margin-top: 20px;
-    padding: 12px;
-    border: 1px solid rgba(58, 50, 66, 0.15);
-    border-radius: 12px;
-    background: #fff;
-    color: #3a3242;
-    font-size: 14px;
+    margin-top: 10px;
+    padding: 8px;
+    border: none;
+    background: none;
+    color: #8d8296;
+    font-size: 11px;
     cursor: pointer;
 }
 
-.zhihu-more:hover:not(:disabled) {
-    background: #faf8fc;
+.zhihu-signout:hover {
+    color: #c98d8d;
 }
 
-.zhihu-more:disabled {
-    color: #a397ad;
-    cursor: default;
-}
+.zhihu-page {max-width:1400px;margin:0 auto;padding:40px 48px 80px;}
 
-@media (max-width: 640px) {
-    .zhihu-hero {
-        flex-direction: column;
-        text-align: center;
-    }
+.zhihu-back {border:none;background:none;color:#a79bb0;font-size:13px;cursor:pointer;padding:4px 0;margin-bottom:22px;}
+.zhihu-back:hover {color:#dec5f5;}
 
-    .zhihu-logout {
-        align-self: center;
-    }
+.zhihu-hero {display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:start;padding-bottom:32px;border-bottom:1px solid #2a2430;}
+.zhihu-hero-avatar {width:96px;height:96px;border-radius:50%;border:1px solid #4a3f52;background:#16131b;object-fit:cover;}
+.zhihu-hero-copy {min-width:0;}
+.zhihu-hero-copy h1 {font-size:30px;font-weight:400;margin-bottom:10px;}
+.zhihu-hero-headline {font-size:13px;color:#a79bb0;margin-bottom:10px;line-height:1.6;}
+.zhihu-hero-link {font-size:12px;color:#dec5f5;text-decoration:none;}
+.zhihu-hero-link:hover {text-decoration:underline;}
+.zhihu-logout {align-self:start;padding:9px 16px;border:1px solid #4a3f52;border-radius:6px;background:none;color:#a79bb0;font-size:12px;cursor:pointer;transition:background .2s;}
+.zhihu-logout:hover {background:#1b1620;color:#c98d8d;}
+
+.zhihu-tabs {display:flex;gap:26px;margin:30px 0 24px;border-bottom:1px solid #2a2430;}
+.zhihu-tab {padding:0 0 12px;border:none;border-bottom:1px solid transparent;background:none;color:#8d8296;font-size:14px;cursor:pointer;margin-bottom:-1px;transition:color .2s;}
+.zhihu-tab:hover {color:#cbb7de;}
+.zhihu-tab.active {color:#f0e8f6;border-bottom-color:#766181;}
+
+.zhihu-panel[hidden] {display:none;}
+.zhihu-list {display:flex;flex-direction:column;gap:14px;}
+
+.zhihu-item {padding:20px 22px;border:1px solid #2a2430;border-radius:8px;background:#141118;transition:border-color .2s;}
+.zhihu-item:hover {border-color:#3d3448;}
+.zhihu-item-head {display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.zhihu-item-type {padding:2px 9px;border-radius:4px;border:1px solid #4a3f52;color:#cbb7de;font-size:11px;}
+.zhihu-item-time {color:#7a7083;font-size:11px;}
+.zhihu-item-title {display:block;margin-bottom:8px;color:#f0e8f6;font-size:15px;text-decoration:none;line-height:1.5;}
+.zhihu-item-title:hover {color:#dec5f5;}
+.zhihu-item-summary {margin-bottom:12px;color:#a79bb0;font-size:13px;line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.zhihu-item-stats {display:flex;gap:18px;color:#7a7083;font-size:11px;}
+
+.zhihu-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.zhihu-person {display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid #2a2430;border-radius:8px;background:#141118;transition:border-color .2s;}
+.zhihu-person:hover {border-color:#3d3448;}
+.zhihu-person-avatar {width:46px;height:46px;border-radius:50%;object-fit:cover;background:#16131b;flex-shrink:0;}
+.zhihu-person-copy {min-width:0;}
+.zhihu-person-name {display:block;color:#f0e8f6;font-size:14px;text-decoration:none;margin-bottom:4px;}
+.zhihu-person-name:hover {color:#dec5f5;}
+.zhihu-person-headline {color:#a79bb0;font-size:12px;line-height:1.5;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.zhihu-person-count {color:#7a7083;font-size:11px;}
+
+.zhihu-empty {padding:60px 0;text-align:center;color:#7a7083;font-size:13px;}
+.zhihu-more {display:block;width:100%;margin-top:22px;padding:13px;border:1px solid #766181;border-radius:6px;background:none;color:#dec5f5;font-size:12px;cursor:pointer;transition:background .2s;}
+.zhihu-more:hover:not(:disabled) {background:#1b1620;}
+.zhihu-more:disabled {border-color:#3d3448;color:#7a7083;cursor:default;}
+
+@media (max-width:640px) {
+    .zhihu-page {padding:28px 20px 60px;}
+    .zhihu-hero {grid-template-columns:1fr;gap:18px;}
+    .zhihu-logout {justify-self:start;}
 }

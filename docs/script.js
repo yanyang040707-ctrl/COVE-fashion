@@ -2898,6 +2898,7 @@ if (reportBack) {
 ========================================= */
 
 const zhihuLoginButton = document.getElementById('zhihuLoginButton');
+const zhihuAccount = document.getElementById('zhihuAccount');
 const zhihuUserButton = document.getElementById('zhihuUserButton');
 const zhihuUserAvatar = document.getElementById('zhihuUserAvatar');
 const zhihuUserName = document.getElementById('zhihuUserName');
@@ -2933,7 +2934,7 @@ function renderZhihuHeader() {
  const profile = zhihuState.profile;
  if (profile) {
   zhihuLoginButton.hidden = true;
-  zhihuUserButton.hidden = false;
+  zhihuAccount.hidden = false;
   zhihuUserName.textContent = profile.name || '知乎用户';
   if (profile.avatarUrl) {
    zhihuUserAvatar.src = profile.avatarUrl;
@@ -2943,7 +2944,7 @@ function renderZhihuHeader() {
   }
  } else {
   zhihuLoginButton.hidden = false;
-  zhihuUserButton.hidden = true;
+  zhihuAccount.hidden = true;
  }
 }
 
@@ -2959,10 +2960,15 @@ async function refreshZhihuStatus() {
 }
 
 zhihuLoginButton.addEventListener('click', () => {
+ closeProfile();
  window.location.href = zhihuApi('/api/auth/login');
 });
 
-zhihuUserButton.addEventListener('click', () => openZhihuPage());
+zhihuUserButton.addEventListener('click', () => {
+ // Entry now lives inside the slide-over panel; close it before switching.
+ closeProfile();
+ openZhihuPage();
+});
 
 
 /* ---------- user page ---------- */
@@ -3117,14 +3123,20 @@ document.getElementById('zhihuContentsMore').addEventListener('click', () => loa
 document.getElementById('zhihuFolloweesMore').addEventListener('click', () => loadZhihuPage('followees', false));
 document.getElementById('zhihuBack').addEventListener('click', () => switchPage('insights'));
 
-document.getElementById('zhihuLogout').addEventListener('click', async () => {
+async function zhihuSignOut() {
  try { await zhihuFetch('/api/auth/logout'); } catch { /* clearing local state is enough */ }
  zhihuState.profile = null;
  zhihuState.contents = { items: [], offset: 0, isEnd: false, loading: false, loaded: false };
  zhihuState.followees = { items: [], offset: 0, isEnd: false, loading: false, loaded: false };
  renderZhihuHeader();
- switchPage('insights');
+ if (currentPage === 'zhihu') switchPage('insights');
  showToast('已退出知乎登录');
+}
+
+document.getElementById('zhihuLogout').addEventListener('click', zhihuSignOut);
+document.getElementById('zhihuSignOut').addEventListener('click', () => {
+ closeProfile();
+ zhihuSignOut();
 });
 
 /* Surface the result of the redirect round-trip, then clean the URL. */

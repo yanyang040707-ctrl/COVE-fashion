@@ -51,18 +51,6 @@
 
             </nav>
 
-            <!-- Zhihu account entry. Shows a sign-in button for guests and
-                 the signed-in user's avatar once authorized. -->
-            <button class="zhihu-login-button" id="zhihuLoginButton" type="button" hidden>
-                <span class="zhihu-login-mark">知</span>
-                <span>知乎登录</span>
-            </button>
-
-            <button class="zhihu-user-button" id="zhihuUserButton" type="button" hidden>
-                <img class="zhihu-user-avatar" id="zhihuUserAvatar" alt="" />
-                <span class="zhihu-user-name" id="zhihuUserName"></span>
-            </button>
-
             <button class="profile-button" id="profileButton">
                 <span class="profile-icon"></span>
                 <span>主页</span>
@@ -481,6 +469,27 @@
                     </div>
 
                     <button class="profile-enter" id="profileEnter" type="button">查看完整主页 ↗</button>
+
+                    <!-- Zhihu account entry. Lives at the bottom of the panel
+                         so the top navigation stays uncrowded. Shows a sign-in
+                         button for guests, or the account card once authorized. -->
+                    <div class="zhihu-slot">
+
+                        <button class="zhihu-login-button" id="zhihuLoginButton" type="button" hidden>
+                            <span class="zhihu-login-mark">知</span>
+                            <span>知乎账号登录</span>
+                        </button>
+
+                        <div class="zhihu-account" id="zhihuAccount" hidden>
+                            <button class="zhihu-user-button" id="zhihuUserButton" type="button">
+                                <img class="zhihu-user-avatar" id="zhihuUserAvatar" alt="" hidden />
+                                <span class="zhihu-user-name" id="zhihuUserName"></span>
+                                <span class="zhihu-user-go">↗</span>
+                            </button>
+                            <button class="zhihu-signout" id="zhihuSignOut" type="button">退出知乎账号</button>
+                        </div>
+
+                    </div>
 
                 </div>
 
