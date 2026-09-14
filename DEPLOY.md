@@ -84,21 +84,6 @@ window.COVE_API_BASE = "https://你的项目名.vercel.app";
 
 ## 常见问题
 
-**知乎授权后跳到 GitHub Pages 404**
-
-当前前端地址为 `https://yanyang040707-ctrl.github.io/COVE-fashion/`。
-后端 Vercel 环境变量 `COVE_FRONTEND_URL` 应设置为这个完整地址（包含仓库路径和末尾 `/`），
-不能继续使用旧的 `https://franchign.github.io/COVE-fashion-platform/`。修改环境变量后重新部署后端。
-
-登录按钮会传递当前页面的 `return_to`，后端校验站点和路径后保存在签名会话中，
-成功或失败后返回该页面，并保留原查询参数和片段。没有有效返回地址时使用 `COVE_FRONTEND_URL`；
-未配置时默认回到上述新站。迁移自旧仓库的 Vercel 项目还需确认连接的是本仓库并部署了最新代码，
-GitHub Pages 则应发布 `main` 分支下的 `/docs`。
-
-`ZHIHU_OAUTH_REDIRECT_URI` 是知乎平台登记的**后端回调接口**，
-当前为 `https://cove-fashion-platform.vercel.app/api/auth/callback`，不要把它改成 GitHub Pages 地址。
-如设置了 `COVE_ALLOWED_ORIGINS`，需包含 `https://yanyang040707-ctrl.github.io`（此项只填来源，不带仓库路径）。
-
 **提示「无法连接搜索服务」**
 
 - `config.js` 里的地址是否填对、是否已推送
