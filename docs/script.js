@@ -356,6 +356,9 @@ function switchPage(pageName) {
     if (pageName === 'report' && !pageSections.report) {
         pageSections.report = document.getElementById('reportPage');
     }
+    if (pageName === 'zhihu' && !pageSections.zhihu) {
+        pageSections.zhihu = document.getElementById('zhihuPage');
+    }
     if (!pageSections[pageName]) return;
 
     currentPage = pageName;
@@ -2884,3 +2887,257 @@ if (reportBack) {
   window.scrollTo(0, 0);
  });
 }
+
+
+/* =========================================
+   ZHIHU ACCOUNT LOGIN
+   =========================================
+   The OAuth exchange happens on the Vercel backend: app_key must never reach
+   the browser. This file only drives the UI and reads already-authorized data
+   through cookie-backed session endpoints.
+========================================= */
+
+const zhihuLoginButton = document.getElementById('zhihuLoginButton');
+const zhihuUserButton = document.getElementById('zhihuUserButton');
+const zhihuUserAvatar = document.getElementById('zhihuUserAvatar');
+const zhihuUserName = document.getElementById('zhihuUserName');
+
+const zhihuState = {
+ profile: null,
+ tab: 'contents',
+ contents: { items: [], offset: 0, isEnd: false, loading: false, loaded: false },
+ followees: { items: [], offset: 0, isEnd: false, loading: false, loaded: false }
+};
+
+function zhihuApi(path) {
+ const base = (window.COVE_API_BASE || '').replace(/\/+$/, '');
+ return base + path;
+}
+
+/* Session lives in an HttpOnly cookie, so every call must send credentials. */
+async function zhihuFetch(path) {
+ const response = await fetch(zhihuApi(path), {
+  credentials: 'include',
+  headers: { 'Accept': 'application/json' }
+ });
+ const data = await response.json().catch(() => ({}));
+ if (!response.ok) {
+  const error = new Error((data.error && data.error.message) || '请求失败');
+  error.code = data.error && data.error.code;
+  throw error;
+ }
+ return data;
+}
+
+function renderZhihuHeader() {
+ const profile = zhihuState.profile;
+ if (profile) {
+  zhihuLoginButton.hidden = true;
+  zhihuUserButton.hidden = false;
+  zhihuUserName.textContent = profile.name || '知乎用户';
+  if (profile.avatarUrl) {
+   zhihuUserAvatar.src = profile.avatarUrl;
+   zhihuUserAvatar.hidden = false;
+  } else {
+   zhihuUserAvatar.hidden = true;
+  }
+ } else {
+  zhihuLoginButton.hidden = false;
+  zhihuUserButton.hidden = true;
+ }
+}
+
+async function refreshZhihuStatus() {
+ try {
+  const status = await zhihuFetch('/api/auth/status');
+  zhihuState.profile = status.authorized ? (status.profile || { name: '知乎用户' }) : null;
+ } catch {
+  // Backend unreachable: fall back to the signed-out view rather than blocking.
+  zhihuState.profile = null;
+ }
+ renderZhihuHeader();
+}
+
+zhihuLoginButton.addEventListener('click', () => {
+ window.location.href = zhihuApi('/api/auth/login');
+});
+
+zhihuUserButton.addEventListener('click', () => openZhihuPage());
+
+
+/* ---------- user page ---------- */
+
+function zhihuTimeText(seconds) {
+ if (!seconds) return '';
+ const date = new Date(seconds * 1000);
+ if (Number.isNaN(date.getTime())) return '';
+ return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+}
+
+const ZHIHU_TYPE_LABEL = {
+ answer: '回答', article: '文章', zvideo: '视频', pin: '想法', question: '提问'
+};
+
+function renderZhihuContents() {
+ const list = document.getElementById('zhihuContentsList');
+ const empty = document.getElementById('zhihuContentsEmpty');
+ const more = document.getElementById('zhihuContentsMore');
+ const state = zhihuState.contents;
+ list.textContent = '';
+
+ state.items.forEach(item => {
+  const card = el('article', null, 'zhihu-item');
+  const head = el('div', null, 'zhihu-item-head');
+  head.append(el('span', ZHIHU_TYPE_LABEL[item.ContentType] || item.ContentType || '内容', 'zhihu-item-type'));
+  const time = zhihuTimeText(item.CreatedAt);
+  if (time) head.append(el('span', time, 'zhihu-item-time'));
+  card.append(head);
+
+  const title = el('a', item.Title || '(无标题)', 'zhihu-item-title');
+  if (item.Url) { title.href = item.Url; title.target = '_blank'; title.rel = 'noopener noreferrer'; }
+  card.append(title);
+
+  if (item.Summary) card.append(el('p', item.Summary, 'zhihu-item-summary'));
+
+  const stats = el('div', null, 'zhihu-item-stats');
+  stats.append(el('span', '赞 ' + (item.LikeCount || 0)));
+  stats.append(el('span', '评论 ' + (item.CommentCount || 0)));
+  stats.append(el('span', '收藏 ' + (item.FavoriteCount || 0)));
+  card.append(stats);
+  list.append(card);
+ });
+
+ empty.hidden = state.items.length > 0 || !state.loaded;
+ more.hidden = state.isEnd || !state.loaded;
+ more.textContent = state.loading ? '加载中…' : '加载更多';
+ more.disabled = state.loading;
+}
+
+function renderZhihuFollowees() {
+ const list = document.getElementById('zhihuFolloweesList');
+ const empty = document.getElementById('zhihuFolloweesEmpty');
+ const more = document.getElementById('zhihuFolloweesMore');
+ const state = zhihuState.followees;
+ list.textContent = '';
+
+ state.items.forEach(item => {
+  const card = el('article', null, 'zhihu-person');
+  if (item.AvatarUrl) {
+   const avatar = el('img', null, 'zhihu-person-avatar');
+   avatar.src = item.AvatarUrl;
+   avatar.alt = '';
+   card.append(avatar);
+  }
+  const copy = el('div', null, 'zhihu-person-copy');
+  const name = el('a', item.Fullname || '知乎用户', 'zhihu-person-name');
+  if (item.Url) { name.href = item.Url; name.target = '_blank'; name.rel = 'noopener noreferrer'; }
+  copy.append(name);
+  if (item.Headline) copy.append(el('p', item.Headline, 'zhihu-person-headline'));
+  copy.append(el('span', (item.FollowerCount || 0) + ' 关注者', 'zhihu-person-count'));
+  card.append(copy);
+  list.append(card);
+ });
+
+ empty.hidden = state.items.length > 0 || !state.loaded;
+ more.hidden = state.isEnd || !state.loaded;
+ more.textContent = state.loading ? '加载中…' : '加载更多';
+ more.disabled = state.loading;
+}
+
+/* Paged loader shared by both tabs: append a page, then re-render. */
+async function loadZhihuPage(kind, reset) {
+ const state = zhihuState[kind];
+ if (state.loading) return;
+ if (reset) { state.items = []; state.offset = 0; state.isEnd = false; state.loaded = false; }
+ else if (state.isEnd) return;
+
+ state.loading = true;
+ if (kind === 'contents') renderZhihuContents(); else renderZhihuFollowees();
+
+ try {
+  const path = kind === 'contents' ? '/api/user/contents' : '/api/user/followees';
+  const data = await zhihuFetch(path + '?offset=' + state.offset + '&limit=20');
+  state.items = state.items.concat(data.items || []);
+  state.isEnd = !data.paging || data.paging.isEnd;
+  // NextOffset is authoritative; fall back to a local count when absent.
+  state.offset = (data.paging && data.paging.nextOffset != null)
+   ? data.paging.nextOffset
+   : state.items.length;
+  state.loaded = true;
+ } catch (error) {
+  state.loaded = true;
+  if (error.code === 'LOGIN_REQUIRED') {
+   zhihuState.profile = null;
+   renderZhihuHeader();
+   showToast('登录状态已失效，请重新登录');
+   switchPage('insights');
+  } else {
+   showToast(error.message || '加载失败，请稍后重试');
+  }
+ } finally {
+  state.loading = false;
+  if (kind === 'contents') renderZhihuContents(); else renderZhihuFollowees();
+ }
+}
+
+function setZhihuTab(tab) {
+ zhihuState.tab = tab;
+ document.querySelectorAll('[data-zhihu-tab]').forEach(button => {
+  button.classList.toggle('active', button.dataset.zhihuTab === tab);
+ });
+ document.getElementById('zhihuContentsPanel').hidden = tab !== 'contents';
+ document.getElementById('zhihuFolloweesPanel').hidden = tab !== 'followees';
+ if (!zhihuState[tab].loaded) loadZhihuPage(tab, true);
+}
+
+function openZhihuPage() {
+ const profile = zhihuState.profile;
+ if (!profile) { showToast('请先使用知乎账号登录'); return; }
+
+ pageSections.zhihu = pageSections.zhihu || document.getElementById('zhihuPage');
+ switchPage('zhihu');
+
+ document.getElementById('zhihuHeroName').textContent = profile.name || '知乎用户';
+ document.getElementById('zhihuHeroHeadline').textContent = profile.headline || '';
+ const avatar = document.getElementById('zhihuHeroAvatar');
+ if (profile.avatarUrl) { avatar.src = profile.avatarUrl; avatar.hidden = false; }
+ else { avatar.hidden = true; }
+ const link = document.getElementById('zhihuHeroLink');
+ if (profile.url) { link.href = profile.url; link.hidden = false; } else { link.hidden = true; }
+
+ setZhihuTab(zhihuState.tab);
+ window.scrollTo(0, 0);
+}
+
+document.querySelectorAll('[data-zhihu-tab]').forEach(button => {
+ button.addEventListener('click', () => setZhihuTab(button.dataset.zhihuTab));
+});
+
+document.getElementById('zhihuContentsMore').addEventListener('click', () => loadZhihuPage('contents', false));
+document.getElementById('zhihuFolloweesMore').addEventListener('click', () => loadZhihuPage('followees', false));
+document.getElementById('zhihuBack').addEventListener('click', () => switchPage('insights'));
+
+document.getElementById('zhihuLogout').addEventListener('click', async () => {
+ try { await zhihuFetch('/api/auth/logout'); } catch { /* clearing local state is enough */ }
+ zhihuState.profile = null;
+ zhihuState.contents = { items: [], offset: 0, isEnd: false, loading: false, loaded: false };
+ zhihuState.followees = { items: [], offset: 0, isEnd: false, loading: false, loaded: false };
+ renderZhihuHeader();
+ switchPage('insights');
+ showToast('已退出知乎登录');
+});
+
+/* Surface the result of the redirect round-trip, then clean the URL. */
+(function handleZhihuLoginRedirect() {
+ const params = new URLSearchParams(window.location.search);
+ const login = params.get('login');
+ if (login) {
+  if (login === 'success') showToast('知乎账号登录成功');
+  else showToast('知乎登录失败：' + (params.get('reason') || '未知原因'));
+  params.delete('login');
+  params.delete('reason');
+  const query = params.toString();
+  window.history.replaceState({}, '', window.location.pathname + (query ? '?' + query : ''));
+ }
+ refreshZhihuStatus();
+})();

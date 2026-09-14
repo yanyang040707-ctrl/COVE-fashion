@@ -51,6 +51,18 @@
 
             </nav>
 
+            <!-- Zhihu account entry. Shows a sign-in button for guests and
+                 the signed-in user's avatar once authorized. -->
+            <button class="zhihu-login-button" id="zhihuLoginButton" type="button" hidden>
+                <span class="zhihu-login-mark">知</span>
+                <span>知乎登录</span>
+            </button>
+
+            <button class="zhihu-user-button" id="zhihuUserButton" type="button" hidden>
+                <img class="zhihu-user-avatar" id="zhihuUserAvatar" alt="" />
+                <span class="zhihu-user-name" id="zhihuUserName"></span>
+            </button>
+
             <button class="profile-button" id="profileButton">
                 <span class="profile-icon"></span>
                 <span>主页</span>
@@ -703,6 +715,45 @@
 
                     </div>
 
+                </div>
+
+            </section>
+
+            <!-- ==========================
+                 ZHIHU USER PAGE
+                 Rendered from the signed-in account's own data.
+                 ========================== -->
+            <section class="page-section zhihu-page" id="zhihuPage">
+
+                <button class="zhihu-back" id="zhihuBack" type="button">‹ 返回</button>
+
+                <header class="zhihu-hero">
+                    <img class="zhihu-hero-avatar" id="zhihuHeroAvatar" alt="" />
+                    <div class="zhihu-hero-copy">
+                        <h1 id="zhihuHeroName">—</h1>
+                        <p class="zhihu-hero-headline" id="zhihuHeroHeadline"></p>
+                        <a class="zhihu-hero-link" id="zhihuHeroLink" target="_blank" rel="noopener noreferrer" hidden>
+                            查看知乎主页 ↗
+                        </a>
+                    </div>
+                    <button class="zhihu-logout" id="zhihuLogout" type="button">退出登录</button>
+                </header>
+
+                <div class="zhihu-tabs" role="tablist">
+                    <button class="zhihu-tab active" data-zhihu-tab="contents" type="button" role="tab">我的创作</button>
+                    <button class="zhihu-tab" data-zhihu-tab="followees" type="button" role="tab">我的关注</button>
+                </div>
+
+                <div class="zhihu-panel" id="zhihuContentsPanel">
+                    <div class="zhihu-list" id="zhihuContentsList"></div>
+                    <p class="zhihu-empty" id="zhihuContentsEmpty" hidden>暂时没有可展示的创作。</p>
+                    <button class="zhihu-more" id="zhihuContentsMore" type="button" hidden>加载更多</button>
+                </div>
+
+                <div class="zhihu-panel" id="zhihuFolloweesPanel" hidden>
+                    <div class="zhihu-grid" id="zhihuFolloweesList"></div>
+                    <p class="zhihu-empty" id="zhihuFolloweesEmpty" hidden>暂时没有可展示的关注。</p>
+                    <button class="zhihu-more" id="zhihuFolloweesMore" type="button" hidden>加载更多</button>
                 </div>
 
             </section>

@@ -4,6 +4,14 @@
     "api/insights/report.py": {
       "memory": 512,
       "maxDuration": 300
+    },
+    "api/auth/index.py": {
+      "memory": 256,
+      "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/auth/:action", "destination": "/api/auth/index" },
+    { "source": "/api/user/:resource", "destination": "/api/auth/index" }
+  ]
 }
