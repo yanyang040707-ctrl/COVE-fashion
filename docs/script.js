@@ -711,6 +711,7 @@ document.addEventListener("keydown", (event) => {
 ========================================= */
 
 function openProfile() {
+    renderProfilePanel();
     profilePanel.classList.add("open");
     document.body.style.overflow = "hidden";
     // Sync panel role line with current user data each time the panel opens.
@@ -2275,7 +2276,7 @@ const profileData = {
  works: []
 };
 // `var` is hoisted, so early renderJobs() calls can safely check it.
-profileState = profileData;
+var profileState = profileData;
 let uploadImages = [];
 let pendingAvatar = '';
 let profileTab = 'works';
@@ -2283,7 +2284,6 @@ let profilePreviousOverflow = '';
 
 pageSections.profile = profilePage;
 
-var profileState = null;
 // When set, the profile page renders this creator instead of the logged-in user.
 var viewingProfile = null;
 
@@ -2302,7 +2302,22 @@ function updateProfileCounts() {
  document.getElementById('profileSavedCount').textContent = guest ? 0 : savedJobIds.size;
 }
 
+function renderProfilePanel() {
+ document.getElementById('panelProfileName').textContent = profileData.name;
+ document.getElementById('panelProfileRole').textContent = profileData.role;
+ const avatar = document.getElementById('panelProfileAvatar');
+ avatar.replaceChildren();
+ if (profileData.avatar) {
+  const img = document.createElement('img');
+  img.src = profileData.avatar;
+  img.alt = profileData.name + ' 的头像';
+  img.addEventListener('error', () => img.remove(), { once: true });
+  avatar.append(img);
+ }
+}
+
 function renderProfileHero() {
+ renderProfilePanel();
  const target = activeProfile();
  if (!target) return;
  const guest = Boolean(viewingProfile);
@@ -2910,6 +2925,24 @@ const zhihuState = {
  followees: { items: [], offset: 0, isEnd: false, loading: false, loaded: false }
 };
 
+// Restore the site's own identity on sign-out without changing works or bio.
+let profileIdentityBeforeZhihu = null;
+
+function syncZhihuProfile() {
+ const profile = zhihuState.profile;
+ if (profile) {
+  if (!profileIdentityBeforeZhihu) {
+   profileIdentityBeforeZhihu = { name: profileData.name, avatar: profileData.avatar };
+  }
+  profileData.name = profile.name || '知乎用户';
+  profileData.avatar = profile.avatarUrl || '';
+ } else if (profileIdentityBeforeZhihu) {
+  Object.assign(profileData, profileIdentityBeforeZhihu);
+  profileIdentityBeforeZhihu = null;
+ }
+ renderProfileHero();
+}
+
 function zhihuApi(path) {
  const base = (window.COVE_API_BASE || '').replace(/\/+$/, '');
  return base + path;
@@ -2931,6 +2964,7 @@ async function zhihuFetch(path) {
 }
 
 function renderZhihuHeader() {
+ syncZhihuProfile();
  const profile = zhihuState.profile;
  if (profile) {
   zhihuLoginButton.hidden = true;
