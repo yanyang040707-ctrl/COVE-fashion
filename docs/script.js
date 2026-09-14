@@ -573,10 +573,9 @@ async function performSearch() {
         zhihuStatus.textContent = `${meta.done} · ${data.items.length} 条知乎参考 · AI 创作建议`;
     } catch (error) {
         if (version !== searchVersion) return;
-        zhihuStatus.textContent = error.name === "AbortError"
-            ? "方案生成超时，请重新点击生成。"
-            : (error instanceof SyntaxError || error instanceof TypeError)
-                ? "无法连接搜索服务，请稍后重试。" : error.message;
+        zhihuStatus.textContent = (error.name === "AbortError" || error instanceof SyntaxError || error instanceof TypeError)
+            ? "方案生成超时，请重新点击生成或检查是否挂上🪜。"
+            : error.message;
     } finally {
         clearTimeout(timeout);
         if (version === searchVersion) zhihuResults.setAttribute("aria-busy", "false");
