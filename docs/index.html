@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COVE — Creative Industry Platform</title>
 
-    <link rel="stylesheet" href="styles.css?v=report-2">
+    <link rel="stylesheet" href="styles.css?v=report-3">
 </head>
 
 <body>
@@ -53,7 +53,7 @@
 
             <button class="profile-button" id="profileButton">
                 <span class="profile-icon"></span>
-                <span>Profile</span>
+                <span>主页</span>
             </button>
 
         </header>
@@ -159,7 +159,7 @@
                         <section class="insight-col">
                             <div class="daily-head"><h2>精选洞察报告</h2></div>
                             <button type="button" class="feature-card" id="featureReportCard">
-                                <span class="feature-visual"></span>
+                                <span class="feature-visual" role="img" aria-label="报告封面：自然野花与未来主义建筑之间的时装造型"></span>
                                 <span class="feature-copy">
                                     <span class="feature-kicker">FASHION INSIGHTS</span>
                                     <span class="feature-title">2026春夏时尚趋势：从自然主义到未来主义</span>
@@ -235,10 +235,6 @@
                     <div class="inspiration-header">
 
                         <div>
-
-                            <div class="page-label">
-                                INSPIRATION
-                            </div>
 
                             <h1>
                                 灵感
@@ -410,22 +406,22 @@
 
             <section class="page-section jobs-board" id="jobsPage">
                 <div id="jobsBrowse">
-                <div class="jobs-toolbar"><h1>职位 <span>/ JOBS</span></h1><button id="publishJob">＋ 发布合作机会</button></div>
+                <div class="jobs-toolbar"><h1>职位</h1><button id="publishJob">＋ 发布合作机会</button></div>
                 <div class="jobs-view-tabs" role="group" aria-label="合作机会分类">
                     <button type="button" class="jobs-view-tab active" data-job-view="all" aria-pressed="true" aria-controls="jobList"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h3m4 0h9M4 12h3m4 0h9M4 19h3m4 0h9"/></svg><span>全部机会</span></button>
                     <button type="button" class="jobs-view-tab" data-job-view="applied" aria-pressed="false" aria-controls="jobList"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/></svg><span>我的申请</span></button>
                     <button type="button" class="jobs-view-tab" data-job-view="published" aria-pressed="false" aria-controls="jobList"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 10 10-10 10L2 12Z"/></svg><span>我发布的</span></button>
                 </div>
                 <div class="jobs-filters">
-                    <label class="job-keyword"><span>⌕</span><input id="jobKeyword" placeholder="搜索项目、品牌或关键词" aria-label="搜索职位"></label>
                     <label><span>城市</span><select id="jobCity" aria-label="城市筛选"><option value="">全部城市</option><option>上海</option><option>北京</option><option>杭州</option><option>广州</option></select></label>
                     <label><span>创作身份</span><select id="jobRole" aria-label="岗位筛选"><option value="">全部岗位</option><option>摄影师</option><option>造型师</option><option>模特</option><option>妆发师</option><option>导演 / 策划</option></select></label>
                     <label><span>报酬</span><select id="jobPay" aria-label="报酬筛选"><option value="">不限报酬</option><option value="high">¥5,000 及以上</option><option value="low">¥5,000 以下</option><option value="tfp">互勉 / TFP</option></select></label>
                     <label><span>合作类型</span><select id="jobTypeFilter" aria-label="合作类型筛选"><option value="all">全部机会</option><option value="paid">商业付费</option><option value="tfp">互勉共创</option></select></label>
                     <button id="resetJobs">重置 ↺</button>
+                    <label class="job-keyword"><span aria-hidden="true">⌕</span><input id="jobKeyword" placeholder="搜索项目、品牌或关键词" aria-label="搜索职位"></label>
                     <button id="savedJobs" aria-pressed="false">♡ 收藏 <span id="savedJobCount">0</span></button>
                 </div>
-                <div class="jobs-results-head"><p><span id="jobResultCount" aria-live="polite">6</span> 个合作机会 <span class="jobs-demo">· 示例项目</span></p><span>为创作者而选，向每一种可能开放</span></div>
+                <div class="jobs-results-head"><p><span id="jobResultCount" aria-live="polite">6</span> 个合作机会 <span class="jobs-demo">· 示例项目</span></p></div>
                 <div id="jobList" class="job-list"></div></div><section id="jobDetail" class="job-detail-page" aria-label="职位详情" hidden></section>
                 <div class="jobs-footer"><span>COVE / CREATIVE CONNECTIONS</span><span>让好的创作，不止发生一次。</span></div>
                 <dialog id="jobActionDialog"><button id="closeJobDialog" aria-label="关闭弹窗">×</button><p class="jobs-eyebrow">COVE / CONNECT</p><h2 id="jobDialogTitle"></h2><p id="jobDialogText"></p><button id="confirmJobDialog">知道了</button></dialog>
@@ -444,7 +440,7 @@
                 <div class="panel-header">
 
                     <span>
-                        Profile
+                        主页
                     </span>
 
                     <button
@@ -468,7 +464,7 @@
                         COVE Member
                     </div>
 
-                    <div class="profile-status">
+                    <div class="profile-status" id="panelProfileRole">
                         Creative Industry Platform
                     </div>
 
@@ -489,7 +485,7 @@
                     <div class="profile-hero-avatar" id="profileAvatar"></div>
                     <div class="profile-hero-copy">
                         <h1 id="profileDisplayName">COVE Member</h1>
-                        <p class="profile-hero-role" id="profileRole">摄影师 · Creative Industry Platform</p>
+                        <p class="profile-hero-role" id="profileRole">摄影师</p>
                         <p class="profile-hero-location"><span>⌖</span> <span id="profileCity">上海</span></p>
                         <p class="profile-hero-bio" id="profileBio">专注时尚与人像影像创作，关注材质、光线与东方美学的当代表达。</p>
                         <div class="profile-hero-actions" id="profileOwnActions">
@@ -609,11 +605,6 @@
                         <h2>接下来观察什么</h2>
                         <p>建议把注意力放在供应链端的公开信息上——面料商的新品发布往往比秀场提前 6 到 9 个月释放信号。当某种工艺开始出现在多个独立品牌的胶囊系列里，它离主流化通常只剩一季。</p>
                     </div>
-
-                    <footer class="report-foot">
-                        <p class="report-note">本报告为 COVE 示例内容，用于页面体验演示，不构成投资或商业决策依据。</p>
-                        <button type="button" class="report-cta" data-insight-query="2026 春夏时尚趋势，自然主义与未来主义的融合">用 COVE 生成我的专属报告 ↗</button>
-                    </footer>
                 </article>
             </section>
 
@@ -798,7 +789,7 @@
 <label class="apply-label">个人简介<textarea name="bio" rows="3" maxlength="200" placeholder="用一两句话介绍你的创作方向。"></textarea></label></section><p id="profileEditError" role="alert"></p></form></div>
 <footer class="apply-footer"><div><strong>让人记住你。</strong><small>本地预览 · 不会上传服务器</small></div><button type="submit" form="profileEditForm" id="profileEditSubmit">保存资料 ↗</button></footer></dialog>
 
-    <script src="script.js?v=report-2"></script>
+    <script src="script.js?v=report-6"></script>
 
 </body>
 </html>

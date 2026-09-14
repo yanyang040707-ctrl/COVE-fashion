@@ -374,6 +374,11 @@ function switchPage(pageName) {
             itemPage === pageName
         );
     });
+
+    // Let the auto-hiding header reset itself whenever the section changes.
+    window.dispatchEvent(new CustomEvent("cove:pagechange", {
+        detail: { page: pageName }
+    }));
 }
 
 
@@ -658,6 +663,11 @@ document.addEventListener("keydown", (event) => {
 function openProfile() {
     profilePanel.classList.add("open");
     document.body.style.overflow = "hidden";
+    // Sync panel role line with current user data each time the panel opens.
+    const panelRole = document.getElementById('panelProfileRole');
+    if (panelRole && profileData && profileData.role) {
+        panelRole.textContent = profileData.role;
+    }
 }
 
 function closeProfile() {
@@ -667,6 +677,73 @@ function closeProfile() {
 
 profileButton.addEventListener("click", openProfile);
 profileClose.addEventListener("click", closeProfile);
+
+
+/* =========================================
+   AUTO-HIDING TOP NAVIGATION
+========================================= */
+
+/* Keep the section menu reachable during long reads: hide the bar while the
+   user scrolls down, reveal it the moment they scroll back up.
+   NOTE: body has `overflow-y:auto`, so body — not window — is the scrolling
+   element. Its scroll events do not bubble to window, so listen on the real
+   container and read the offset from whichever element actually moves. */
+(function initAutoHideNav() {
+    const nav = document.querySelector(".top-nav");
+    if (!nav) return;
+
+    const HIDE_AFTER = 60;    // start hiding just below the header itself
+    const THRESHOLD = 4;      // ignore sub-pixel and trackpad jitter
+
+    function offset() {
+        return document.body.scrollTop
+            || document.documentElement.scrollTop
+            || window.scrollY
+            || 0;
+    }
+
+    let lastY = offset();
+    let ticking = false;
+
+    function update() {
+        ticking = false;
+        const y = offset();
+
+        // A locked body (open profile panel) must never strand the bar hidden.
+        if (document.body.style.overflow === "hidden") {
+            nav.classList.remove("nav-hidden");
+            lastY = y;
+            return;
+        }
+
+        const delta = y - lastY;
+        if (Math.abs(delta) < THRESHOLD) return;
+
+        if (delta > 0 && y > HIDE_AFTER) {
+            nav.classList.add("nav-hidden");
+        } else if (delta < 0) {
+            nav.classList.remove("nav-hidden");
+        }
+        lastY = y;
+    }
+
+    function onScroll() {
+        if (!ticking) {
+            ticking = true;
+            window.requestAnimationFrame(update);
+        }
+    }
+
+    // Cover both models: body as scroller, and window/document as scroller.
+    document.body.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    // Switching sections resets scroll to the top, so always show the bar again.
+    window.addEventListener("cove:pagechange", () => {
+        nav.classList.remove("nav-hidden");
+        lastY = offset();
+    });
+})();
 
 
 /* =========================================
@@ -1863,7 +1940,15 @@ document.getElementById('jobTypeFilter').onchange=event=>{jobType=event.target.v
 document.getElementById("savedJobs").onclick=()=>{jobSavedOnly=!jobSavedOnly;const b=document.getElementById("savedJobs");b.classList.toggle("active",jobSavedOnly);b.setAttribute("aria-pressed",String(jobSavedOnly));renderJobs();};
 ["jobCity","jobRole","jobPay"].forEach(id=>document.getElementById(id).addEventListener("change",renderJobs));
 document.getElementById("jobKeyword").addEventListener("input",renderJobs);
-document.getElementById("resetJobs").onclick=()=>{["jobCity","jobRole","jobPay","jobKeyword"].forEach(id=>document.getElementById(id).value="");jobSavedOnly=false;document.getElementById("savedJobs").classList.remove("active");document.getElementById("savedJobs").setAttribute("aria-pressed","false");jobType="all";document.getElementById("jobTypeFilter").value="all";renderJobs();};
+/* Keep the collapsible search open while it holds a query, so moving the
+   mouse away never hides text the user already typed. */
+const jobKeywordField=document.getElementById("jobKeyword");
+const jobKeywordShell=jobKeywordField.closest(".job-keyword");
+const syncJobKeywordWidth=()=>jobKeywordShell.classList.toggle("is-expanded",jobKeywordField.value.trim()!=="");
+jobKeywordField.addEventListener("input",syncJobKeywordWidth);
+jobKeywordShell.addEventListener("click",()=>jobKeywordField.focus());
+syncJobKeywordWidth();
+document.getElementById("resetJobs").onclick=()=>{["jobCity","jobRole","jobPay","jobKeyword"].forEach(id=>document.getElementById(id).value="");jobSavedOnly=false;document.getElementById("savedJobs").classList.remove("active");document.getElementById("savedJobs").setAttribute("aria-pressed","false");jobType="all";document.getElementById("jobTypeFilter").value="all";syncJobKeywordWidth();renderJobs();};
 document.getElementById("publishJob").onclick=()=>openPublish();
 document.getElementById("closeJobDialog").onclick=()=>{pendingWithdrawId=null;jobDialog.close();};
 document.getElementById("confirmJobDialog").onclick=()=>{
@@ -2174,9 +2259,12 @@ function renderProfileHero() {
  document.getElementById('profileDisplayName').textContent = target.name;
  document.getElementById('profileRole').textContent = guest
   ? `${target.role} · ${target.city}`
-  : `${target.role} · Creative Industry Platform`;
+  : target.role;
  document.getElementById('profileCity').textContent = target.city;
  document.getElementById('profileBio').textContent = target.bio;
+ // Keep the panel status line in sync with the logged-in user's role.
+ const panelRole = document.getElementById('panelProfileRole');
+ if (panelRole && !guest) panelRole.textContent = target.role;
  document.getElementById('profileOwnActions').hidden = guest;
  document.getElementById('profileGuestActions').hidden = !guest;
  document.getElementById('profileBack').hidden = !guest;

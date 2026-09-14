@@ -351,6 +351,8 @@ def application(environ, start_response):
         assets = {"/": "index.html", "/index.html": "index.html", "/script.js": "script.js", "/styles.css": "styles.css"}
         for name in ("idle", "greet", "sleep", "sway", "dribble"):
             assets["/assets/mascot/" + name + ".gif"] = "assets/mascot/" + name + ".gif"
+        assets["/assets/insights/feature-report.png"] = "assets/insights/feature-report.png"
+        assets["/assets/insights/report-cover.png"] = "assets/insights/report-cover.png"
         if path not in assets:
             raise APIError(404, "NOT_FOUND", "页面不存在。")
         file = ROOT / "docs" / assets[path]
