@@ -35,6 +35,7 @@ MAX_BODY = 4096
 
 DEFAULT_ORIGINS = (
     "https://franchign.github.io",
+    "https://yanyang040707-ctrl.github.io",
     "http://127.0.0.1:8765",
     "http://localhost:8765",
 )

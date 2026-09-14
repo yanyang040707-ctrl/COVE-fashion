@@ -20,7 +20,7 @@
    No trailing slash.
 ========================================= */
 
-var BACKEND_ORIGIN = "https://REPLACE-WITH-YOUR-PROJECT.vercel.app";
+var BACKEND_ORIGIN = "https://cove-fashion-platform.vercel.app";
 
 (function () {
     var host = window.location.hostname;
