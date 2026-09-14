@@ -96,7 +96,13 @@ class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         # Useful for checking the deployment without burning API quota.
         origin = self._cors_origin()
-        configured = bool(os.environ.get("ZHIHU_ACCESS_SECRET", "").strip())
+        # Ask server.py rather than reading the env var directly: the secret
+        # ships as a hardcoded default, so an env-only probe reports a false
+        # negative on a deployment that actually works.
+        try:
+            configured = bool(server.credentials())
+        except Exception:
+            configured = False
         self._send(200, {
             "ok": True,
             "endpoint": "/api/insights/report",
