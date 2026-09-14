@@ -33,15 +33,23 @@ import server  # noqa: E402  (path must be set before this import)
 MAX_BODY = 4096
 
 
+DEFAULT_ORIGINS = (
+    "https://franchign.github.io",
+    "http://127.0.0.1:8765",
+    "http://localhost:8765",
+)
+
+
 def allowed_origins():
     """Origins permitted to call this function.
 
-    Set COVE_ALLOWED_ORIGINS in the Vercel dashboard to a comma-separated
-    list, e.g. "https://franchign.github.io,http://127.0.0.1:8765".
+    Defaults cover the GitHub Pages site and the local preview so a fresh
+    deployment works with no dashboard configuration. Set
+    COVE_ALLOWED_ORIGINS to a comma-separated list to override.
     """
     raw = os.environ.get("COVE_ALLOWED_ORIGINS", "")
     origins = {item.strip().rstrip("/") for item in raw.split(",") if item.strip()}
-    return origins
+    return origins or {o.rstrip("/") for o in DEFAULT_ORIGINS}
 
 
 class handler(BaseHTTPRequestHandler):

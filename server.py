@@ -31,6 +31,8 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 def credentials():
+    # Fallback default ships with the repo so a fresh deployment works without
+    # any dashboard configuration. Environment variable still takes priority.
     secret = os.environ.get("ZHIHU_ACCESS_SECRET", "f77bd9499de76893d0caf727b1cbf47fc70f3d97").strip()
     if not secret:
         raise APIError(503, "AUTH_REQUIRED", "搜索服务尚未配置授权。")
@@ -143,9 +145,15 @@ REPORT_SCHEMAS = {
                 'cautions': ['风险与易踩坑提示']},
     'trend': {'signals': [{'name': '趋势信号名称', 'detail': '具体表现与依据',
                            'confidence': '高 / 中 / 低 之一，标明确定性', 'source_ids': [1]}],
+              'visual_refs': [{'name': '视觉参考方向名称', 'palette': ['#RRGGBB', '#RRGGBB'],
+                               'mood': '两三个形容词，描述整体氛围', 'tags': ['风格标签'],
+                               'search': '建议在灵感板搜索的关键词'}],
               'drivers': ['背后的驱动因素'], 'keyitems': ['关键单品、元素或做法'],
               'actions': ['可执行的落地建议'], 'cautions': ['风险与不确定性提示']},
     'general': {'points': [{'name': '要点标题', 'detail': '具体分析', 'source_ids': [1]}],
+                'visual_refs': [{'name': '视觉参考方向名称', 'palette': ['#RRGGBB', '#RRGGBB'],
+                                 'mood': '两三个形容词，描述整体氛围', 'tags': ['风格标签'],
+                                 'search': '建议在灵感板搜索的关键词'}],
                 'actions': ['可执行建议'], 'cautions': ['风险与不确定性提示']},
 }
 
@@ -157,13 +165,16 @@ REPORT_RULES = {
                 'objects': {'colors': (('name', 'hex', 'mood', 'usage'), 4, 8),
                             'combinations': (('name', 'scene'), 2, 4)}},
     'trend': {'texts': {'drivers': (1, 12), 'keyitems': (1, 12), 'actions': (1, 12), 'cautions': (1, 12)},
-              'objects': {'signals': (('name', 'detail', 'confidence'), 3, 6)}},
+              'objects': {'signals': (('name', 'detail', 'confidence'), 3, 6),
+                          'visual_refs': (('name', 'mood', 'search'), 2, 4)}},
     'general': {'texts': {'actions': (1, 12), 'cautions': (1, 12)},
-                'objects': {'points': (('name', 'detail'), 3, 8)}},
+                'objects': {'points': (('name', 'detail'), 3, 8),
+                            'visual_refs': (('name', 'mood', 'search'), 2, 4)}},
 }
 
 
 def shooting_report(query):
+    # Fallback default ships with the repo; env var overrides it when present.
     key = os.environ.get('COVE_AI_API_KEY', 'sk-1YngTi7whGKGjPsh5164B50f35Ab48B595433195B7533c3f').strip()
     if not key:
         raise APIError(503, 'AI_AUTH_REQUIRED', '拍摄方案服务尚未配置模型密钥。')
@@ -189,8 +200,11 @@ def shooting_report(query):
                   'palette：询问色彩、配色、流行色、色卡时使用，输出 colors（5-6个，hex 必须是 #RRGGBB 六位十六进制真实色值）、'
                   'combinations（2-3组，hexes 取自 colors）、materials、applications、cautions。'
                   'trend：询问流行趋势、风格走向、行业变化时使用，输出 signals（3-5条，confidence 只能是 高/中/低）、'
+                  'visual_refs（2-3条视觉参考方向，palette 为2个真实色值的 #RRGGBB hex，mood 为2-3个形容词，tags 为2-4个风格标签，search 为灵感搜索关键词）、'
                   'drivers、keyitems、actions、cautions。'
-                  'general：其他开放问题使用，输出 points（3-6条）、actions、cautions。'
+                  'general：其他开放问题使用，输出 points（3-6条）、'
+                  'visual_refs（2-3条视觉参考方向，palette 为2个真实色值的 #RRGGBB hex，mood 为2-3个形容词，tags 为2-4个风格标签，search 为灵感搜索关键词）、'
+                  'actions、cautions。'
                   '所有类型都必须输出 type、title、summary、assumptions、source_note。'
                   '用中文输出，只输出JSON，不用Markdown围栏。每个字段不超过60字，整份报告控制在1800字以内。'
                   '涉及真实地点或机构时不要虚构地址、开放时间、门票、预约或许可信息，无法核实的明确标注待核实。'

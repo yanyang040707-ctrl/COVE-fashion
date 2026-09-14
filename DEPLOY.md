@@ -10,11 +10,20 @@
 
 ## 方式一：本地预览（开箱即用）
 
+先在仓库根目录创建 `.env.local`（已被 `.gitignore` 忽略，不会提交）：
+
+```
+ZHIHU_ACCESS_SECRET=你的知乎 Access Secret
+COVE_AI_API_KEY=你的模型密钥
+```
+
+然后启动：
+
 ```bash
 python server.py --port 8765
 ```
 
-`docs/config.js` 中 `COVE_API_BASE` 默认为空字符串，前端走同源相对路径，由 `server.py` 同时提供页面和接口。无需额外配置。
+`docs/config.js` 中 `COVE_API_BASE` 默认为空字符串，前端走同源相对路径，由 `server.py` 同时提供页面和接口。
 
 ---
 
@@ -89,4 +98,14 @@ window.COVE_API_BASE = "https://你的项目名.vercel.app";
 
 ## 安全提醒
 
-`server.py` 目前对 `ZHIHU_ACCESS_SECRET`（第 34 行）和 `COVE_AI_API_KEY`（第 167 行）保留了硬编码的默认值。本仓库是公开的，这两个值等同于已经泄露，建议尽快在各自平台吊销并重新签发，改为仅从环境变量读取。
+**密钥绝不能放进 `docs/` 里的任何文件。** GitHub Pages 是静态托管，`docs/` 下的所有内容（包括 `config.js`）浏览器都能直接打开查看。任何写进前端的密钥等同于公开发布，且会被爬虫自动扫走。
+
+正确的做法只有一种：密钥存放在后端平台（Vercel）的环境变量中，浏览器只知道后端地址，不接触密钥本身。
+
+### 已泄露密钥的处理
+
+本仓库此前在 `server.py` 中硬编码了 `ZHIHU_ACCESS_SECRET` 和 `COVE_AI_API_KEY` 的默认值。由于仓库是公开的，**这两个值必须视为已泄露**：
+
+1. 到知乎开放平台和模型服务商后台，**吊销旧密钥并重新签发**；
+2. 把新密钥只填到 Vercel 的环境变量里；
+3. 注意：这些值仍留在 Git 历史记录中，仅删除当前文件无法清除。吊销旧密钥是唯一可靠的补救措施。
